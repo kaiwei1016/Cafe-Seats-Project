@@ -7,23 +7,46 @@
     color: blue;
   }
   
+  .navbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    font-size: 18px;
+  }
+  
+  .navbar button {
+    padding: 5px 15px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
   .background {
     position: relative;
     width: 100vw;
+    height: calc(100vw * 0.75);
+    overflow: hidden;
   }
   
   .bg-image {
-    width: 100vw;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   
   .seat {
     position: absolute;
     height: 30px;
     width: 30px;
-    cursor: pointer;
+    user-select: none;
   }
   
-  /* 有人座位才會加上這個閃爍動畫 */
+  .pending {
+    opacity: 0.5;
+  }
+  
   .occupied {
     animation: blink 1s infinite;
     border: 2px solid red;
@@ -38,5 +61,10 @@
     50% {
       opacity: 0.5;
     }
+  }
+  
+  .selected-delete {
+    opacity: 0.5;
+    border: 2px dashed red;
   }
   

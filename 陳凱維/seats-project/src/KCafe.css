@@ -67,4 +67,33 @@
     opacity: 0.5;
     border: 2px dashed red;
   }
+
+  .menu-button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .menu-dropdown {
+    position: absolute;
+    right: 10px;
+    top: 50px;
+    background: white;
+    border: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    gap: 5px;
+  }
+  
+  .edit-controls {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
   

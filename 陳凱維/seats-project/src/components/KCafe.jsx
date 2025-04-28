@@ -14,11 +14,19 @@ const initialSeatPositions = [
   { id: 29, left: 8.8, top: 59.7 }, { id: 30, left: 17.0, top: 60.0 }, { id: 31, left: 8.8, top: 67.7 }, { id: 32, left: 16.3, top: 67.8 },
 ];
 
-const KCafe = () => {
-  const [seats, setSeats] = useState(Array(initialSeatPositions.length).fill(false));
-  const [positions, setPositions] = useState(initialSeatPositions);
+const KCafe = ({ hideMenu = false }) => {
+  const [seats, setSeats] = useState(() => {
+    const savedSeats = localStorage.getItem('kcafe_seats');
+    return savedSeats ? JSON.parse(savedSeats) : Array(initialSeatPositions.length).fill(false);
+  });
+  
+  const [positions, setPositions] = useState(() => {
+    const savedPositions = localStorage.getItem('kcafe_positions');
+    return savedPositions ? JSON.parse(savedPositions) : initialSeatPositions;
+  });
+  
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [mode, setMode] = useState('business'); // 'business', 'edit', 'view'
+  const [mode, setMode] = useState('business');
   const [menuOpen, setMenuOpen] = useState(false);
   const [dragging, setDragging] = useState(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -35,6 +43,28 @@ const KCafe = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (hideMenu) {
+      setMode('view');
+      const refresh = setInterval(() => {
+        window.location.reload();
+      }, 5000); // 每30秒刷新
+
+      return () => clearInterval(refresh);
+    }
+  }, [hideMenu]);
+
+  useEffect(() => {
+    localStorage.setItem('kcafe_seats', JSON.stringify(seats));
+  }, [seats]);
+  
+  useEffect(() => {
+    localStorage.setItem('kcafe_seats', JSON.stringify(seats));
+    localStorage.setItem('kcafe_positions', JSON.stringify(positions));
+  }, [seats, positions]);
+  
+  
 
   const toggleSeat = (index, e) => {
     if (mode !== 'business' || pendingSeat || deleteMode || moveMode) return;
@@ -89,7 +119,7 @@ const KCafe = () => {
 
   const addSeat = () => {
     if (pendingSeat !== null || deleteMode || moveMode) return;
-    const newId = positions.length + 1;
+    const newId = positions.length > 0 ? Math.max(...positions.map(p => p.id)) + 1 : 1;
     setPendingSeat({ id: newId, left: 50, top: 50 });
   };
 
@@ -154,31 +184,35 @@ const KCafe = () => {
 
   return (
     <div className="kcafe-container" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
-      <Navbar
-        mode={mode}
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
-        setMode={setMode}
-        addSeat={addSeat}
-        pendingSeat={pendingSeat}
-        deleteMode={deleteMode}
-        moveMode={moveMode}
-        startDeleteMode={startDeleteMode}
-        confirmDelete={confirmDelete}
-        cancelDeleteMode={cancelDeleteMode}
-        startMoveMode={startMoveMode}
-        confirmMove={confirmMove}
-        cancelMoveMode={cancelMoveMode}
-        selectedToDelete={selectedToDelete}
-        selectedToMove={selectedToMove}
-        tempMovePosition={tempMovePosition}
-        confirmSeat={confirmSeat}
-        checkOverlap={checkOverlap}
-      />
+      {!hideMenu && (
+        <Navbar
+          mode={mode}
+          menuOpen={menuOpen}
+          setMenuOpen={setMenuOpen}
+          setMode={setMode}
+          addSeat={addSeat}
+          pendingSeat={pendingSeat}
+          deleteMode={deleteMode}
+          moveMode={moveMode}
+          startDeleteMode={startDeleteMode}
+          confirmDelete={confirmDelete}
+          cancelDeleteMode={cancelDeleteMode}
+          startMoveMode={startMoveMode}
+          confirmMove={confirmMove}
+          cancelMoveMode={cancelMoveMode}
+          selectedToDelete={selectedToDelete}
+          selectedToMove={selectedToMove}
+          tempMovePosition={tempMovePosition}
+          confirmSeat={confirmSeat}
+          checkOverlap={checkOverlap}
+          positions={positions}
+        />
+      )}
 
       <h1>Welcome to KCafe!</h1>
       <h2>
-        現在時間：{currentTime.toLocaleString()}　
+        現在時間：{currentTime.toLocaleString()}
+        <br/>
         目前剩餘座位：<span className="remaining">{seats.filter(seat => !seat).length}</span>/{seats.length}
       </h2>
 
@@ -204,7 +238,7 @@ const KCafe = () => {
         ))}
         {pendingSeat && (
           <img
-            src="/img/g_circle.png"
+            src='/img/g_circle.png'
             alt="New Seat"
             className="seat pending"
             style={{ left: `${pendingSeat.left}%`, top: `${pendingSeat.top}%` }}

@@ -1,0 +1,42 @@
+.kcafe-container {
+    text-align: center;
+    position: relative;
+  }
+  
+  .remaining {
+    color: blue;
+  }
+  
+  .background {
+    position: relative;
+    width: 100vw;
+  }
+  
+  .bg-image {
+    width: 100vw;
+  }
+  
+  .seat {
+    position: absolute;
+    height: 30px;
+    width: 30px;
+    cursor: pointer;
+  }
+  
+  /* 有人座位才會加上這個閃爍動畫 */
+  .occupied {
+    animation: blink 1s infinite;
+    border: 2px solid red;
+    border-radius: 50%;
+    box-sizing: border-box;
+  }
+  
+  @keyframes blink {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  

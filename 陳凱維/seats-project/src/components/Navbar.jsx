@@ -42,11 +42,17 @@ const Navbar = ({
       {/* ☰ 漢堡選單按鈕 */}
       <button
         className="menu-button"
-        onClick={() => setMenuOpen(!menuOpen)}
-        disabled={isMenuLocked}
+        onClick={() => {
+          if (menuOpen) {
+            setShowQRCodeOptions(false); 
+          }
+          setMenuOpen(!menuOpen);
+        }}
+        disabled={pendingSeat !== null || deleteMode || moveMode}
       >
         ☰
       </button>
+
 
       {/* 漢堡選單下拉功能表 */}
       {menuOpen && (

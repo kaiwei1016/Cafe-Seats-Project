@@ -1,181 +1,186 @@
+/* --- Global Styles --- */
 body {
-    font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
-  }
+  font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+}
 
 .kcafe-container {
-    text-align: center;
-    position: relative;
+  text-align: center;
+  position: relative;
+}
+
+.remaining {
+  color: blue;
+}
+
+/* --- Navbar --- */
+.navbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  font-size: 18px;
+}
+
+.navbar button {
+  padding: 5px 15px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.menu-button {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.menu-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.menu-dropdown {
+  position: absolute;
+  right: 10px;
+  top: 50px;
+  background: white;
+  border: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  gap: 5px;
+}
+
+/* --- Edit Controls --- */
+.edit-controls {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.edit-controls button {
+  margin: 0 5px;
+}
+
+.edit-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Guest Button --- */
+.go-guest-button {
+  margin-left: 10px;
+  padding: 5px 10px;
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.go-guest-button:hover {
+  background-color: #005fa3;
+}
+
+/* --- Background --- */
+.background {
+  position: relative;
+  width: 100vw;
+  height: calc(100vw * 0.75);
+  overflow: hidden;
+}
+
+.bg-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Seats --- */
+.seat-container {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.seat {
+  position: absolute;
+  height: 30px;
+  width: 30px;
+  user-select: none;
+}
+
+.seat.pending {
+  opacity: 0.5;
+}
+
+.seat.occupied {
+  animation: blink 1s infinite;
+  border: 2px solid red;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.selected-delete {
+  opacity: 0.5;
+  border: 2px dashed red;
+}
+
+.selected-move {
+  opacity: 0.7;
+  border: 2px dashed blue;
+}
+
+/* --- Seat Numbers --- */
+.seat-number {
+  margin-top: 2px;
+  font-size: 12px;
+  color: black;
+  font-weight: bold;
+}
+
+.seat-number.highlight {
+  color: red;
+  font-weight: 900;
+}
+
+/* --- QR Code Controls --- */
+.qr-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.qr-controls select, .qr-controls button {
+  padding: 5px;
+  font-size: 14px;
+}
+
+/* --- Error Messages --- */
+.error-message {
+  color: red;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.error-text {
+  color: red;
+  font-weight: bold;
+}
+
+/* --- Animations --- */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
   }
-  
-  .remaining {
-    color: blue;
-  }
-  
-  .navbar {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    padding: 10px;
-    background-color: #f0f0f0;
-    font-size: 18px;
-  }
-  
-  .navbar button {
-    padding: 5px 15px;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  
-  .background {
-    position: relative;
-    width: 100vw;
-    height: calc(100vw * 0.75);
-    overflow: hidden;
-  }
-  
-  .bg-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .seat {
-    position: absolute;
-    height: 30px;
-    width: 30px;
-    user-select: none;
-  }
-  
-  .pending {
+  50% {
     opacity: 0.5;
   }
-  
-  .occupied {
-    animation: blink 1s infinite;
-    border: 2px solid red;
-    border-radius: 50%;
-    box-sizing: border-box;
-  }
-  
-  @keyframes blink {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
-  
-  .selected-delete {
-    opacity: 0.5;
-    border: 2px dashed red;
-  }
-
-  .menu-button {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    font-size: 24px;
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .menu-dropdown {
-    position: absolute;
-    right: 10px;
-    top: 50px;
-    background: white;
-    border: 1px solid #ccc;
-    display: flex;
-    flex-direction: column;
-    padding: 5px;
-    gap: 5px;
-  }
-  
-  .edit-controls {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-  }
-  
-  .selected-delete {
-    opacity: 0.5;
-    border: 2px dashed red;
-  }
-  
-  .selected-move {
-    opacity: 0.7;
-    border: 2px dashed blue;
-  }
-  
-  .seat-container {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    text-align: center;
-  }
-  
-  .seat-number {
-    margin-top: 2px;
-    font-size: 12px;
-    color: black;
-    font-weight: bold;
-  }
-  
-  .seat-number.highlight {
-    color: red;
-    font-weight: 900;
-  }
-
-  .qr-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 10px;
-  }
-  .qr-controls select, .qr-controls button {
-    padding: 5px;
-    font-size: 14px;
-  }
-  
-  .go-guest-button {
-    margin-left: 10px;
-    padding: 5px 10px;
-    background-color: #0077cc;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  
-  .go-guest-button:hover {
-    background-color: #005fa3;
-  }
-  
-  .edit-controls button {
-    margin: 0 5px;
-  }
-  .edit-controls button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-  
-  .menu-button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .error-message {
-    color: red;
-    margin-top: 5px;
-    font-size: 14px;
-  }
-  
-  .error-text {
-    color: red;
-    font-weight: bold;
-  }
-  
-  
+}

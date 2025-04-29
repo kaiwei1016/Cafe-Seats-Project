@@ -81,7 +81,7 @@ const Navbar = ({
       {/* 顧客模式切換按鈕 */}
       {mode === 'view' && (
         <button className="go-guest-button" onClick={() => window.open('/guest', '_blank')}>
-          切到顧客版
+          查看顧客版
         </button>
       )}
 

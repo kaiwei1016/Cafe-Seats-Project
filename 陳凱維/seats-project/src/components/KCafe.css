@@ -154,4 +154,28 @@ body {
     background-color: #005fa3;
   }
   
+  .edit-controls button {
+    margin: 0 5px;
+  }
+  .edit-controls button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  
+  .menu-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .error-message {
+    color: red;
+    margin-top: 5px;
+    font-size: 14px;
+  }
+  
+  .error-text {
+    color: red;
+    font-weight: bold;
+  }
+  
   

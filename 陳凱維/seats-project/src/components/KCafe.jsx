@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Seat from './Seat';
+import Background from './Background';
 import Navbar from './Navbar';
 import './KCafe.css';
 
+// 初始座位配置
 const initialSeatPositions = [
   { id: 1, left: 32.4, top: 9.0 }, { id: 2, left: 42.8, top: 9.0 }, { id: 3, left: 53.2, top: 9.0 }, { id: 4, left: 63.6, top: 9.0 },
   { id: 5, left: 32.4, top: 17.3 }, { id: 6, left: 42.8, top: 17.3 }, { id: 7, left: 53.2, top: 17.3 }, { id: 8, left: 63.6, top: 17.3 },
@@ -15,19 +16,22 @@ const initialSeatPositions = [
 ];
 
 const KCafe = ({ hideMenu = false }) => {
+  // 狀態管理
   const [seats, setSeats] = useState(() => {
     const savedSeats = localStorage.getItem('kcafe_seats');
     return savedSeats ? JSON.parse(savedSeats) : Array(initialSeatPositions.length).fill(false);
   });
-  
+
   const [positions, setPositions] = useState(() => {
     const savedPositions = localStorage.getItem('kcafe_positions');
     return savedPositions ? JSON.parse(savedPositions) : initialSeatPositions;
   });
-  
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mode, setMode] = useState('business');
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // 操作狀態
   const [dragging, setDragging] = useState(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [pendingSeat, setPendingSeat] = useState(null);
@@ -37,6 +41,7 @@ const KCafe = ({ hideMenu = false }) => {
   const [selectedToMove, setSelectedToMove] = useState(null);
   const [tempMovePosition, setTempMovePosition] = useState(null);
 
+  // 時間顯示
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -44,28 +49,30 @@ const KCafe = ({ hideMenu = false }) => {
     return () => clearInterval(timer);
   }, []);
 
+  // 顧客觀察模式自動刷新
   useEffect(() => {
     if (hideMenu) {
       setMode('view');
       const refresh = setInterval(() => {
         window.location.reload();
-      }, 5000); // 每30秒刷新
-
+      }, 5000);
       return () => clearInterval(refresh);
     }
   }, [hideMenu]);
 
+  // 本地儲存同步
   useEffect(() => {
     localStorage.setItem('kcafe_seats', JSON.stringify(seats));
   }, [seats]);
-  
+
   useEffect(() => {
     localStorage.setItem('kcafe_seats', JSON.stringify(seats));
     localStorage.setItem('kcafe_positions', JSON.stringify(positions));
   }, [seats, positions]);
-  
-  
 
+  // ------------------------- 功能邏輯區 ------------------------- //
+
+  // 座位切換
   const toggleSeat = (index, e) => {
     if (mode !== 'business' || pendingSeat || deleteMode || moveMode) return;
     e.stopPropagation();
@@ -74,18 +81,16 @@ const KCafe = ({ hideMenu = false }) => {
     setSeats(updatedSeats);
   };
 
+  // 滑鼠操作（拖曳座位）
   const handleMouseDown = (index, e) => {
     if (mode !== 'edit') return;
     e.preventDefault();
-
     const rect = e.target.getBoundingClientRect();
     setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
 
-    if (pendingSeat !== null) {
-      setDragging('pending');
-    } else if (deleteMode) {
-      setSelectedToDelete(index);
-    } else if (moveMode) {
+    if (pendingSeat !== null) setDragging('pending');
+    else if (deleteMode) setSelectedToDelete(index);
+    else if (moveMode) {
       setSelectedToMove(index);
       setDragging(index);
     }
@@ -99,29 +104,24 @@ const KCafe = ({ hideMenu = false }) => {
       const topPercent = ((e.clientY - containerRect.top - offset.y) / containerRect.height) * 100;
 
       if (dragging === 'pending') {
-        setPendingSeat({
-          ...pendingSeat,
-          left: Math.max(0, Math.min(100, leftPercent)),
-          top: Math.max(0, Math.min(100, topPercent)),
-        });
+        setPendingSeat({ ...pendingSeat, left: Math.max(0, Math.min(100, leftPercent)), top: Math.max(0, Math.min(100, topPercent)) });
       } else if (moveMode && dragging === selectedToMove) {
-        setTempMovePosition({
-          left: Math.max(0, Math.min(100, leftPercent)),
-          top: Math.max(0, Math.min(100, topPercent)),
-        });
+        setTempMovePosition({ left: Math.max(0, Math.min(100, leftPercent)), top: Math.max(0, Math.min(100, topPercent)) });
       }
     }
   };
 
-  const handleMouseUp = () => {
-    setDragging(null);
-  };
+  const handleMouseUp = () => setDragging(null);
 
+  // 新增座位
   const addSeat = () => {
-    if (pendingSeat !== null || deleteMode || moveMode) return;
+    if (pendingSeat || deleteMode || moveMode) return;
+    setMenuOpen(false);
     const newId = positions.length > 0 ? Math.max(...positions.map(p => p.id)) + 1 : 1;
     setPendingSeat({ id: newId, left: 50, top: 50 });
   };
+
+  const cancelAddSeat = () => setPendingSeat(null);
 
   const confirmSeat = () => {
     if (!pendingSeat) return;
@@ -140,8 +140,10 @@ const KCafe = ({ hideMenu = false }) => {
     });
   };
 
+  // 刪除座位
   const startDeleteMode = () => {
-    if (pendingSeat !== null || moveMode) return;
+    if (pendingSeat || moveMode) return;
+    setMenuOpen(false);
     setDeleteMode(true);
     setSelectedToDelete(null);
   };
@@ -159,8 +161,10 @@ const KCafe = ({ hideMenu = false }) => {
     setSelectedToDelete(null);
   };
 
+  // 移動座位
   const startMoveMode = () => {
-    if (pendingSeat !== null || deleteMode) return;
+    if (pendingSeat || deleteMode) return;
+    setMenuOpen(false);
     setMoveMode(true);
     setSelectedToMove(null);
     setTempMovePosition(null);
@@ -181,6 +185,19 @@ const KCafe = ({ hideMenu = false }) => {
     setSelectedToMove(null);
     setTempMovePosition(null);
   };
+
+  const checkMoveOverlap = () => {
+    if (selectedToMove === null || !tempMovePosition) return true;
+    const threshold = 5;
+    return positions.every((pos, idx) => {
+      if (idx === selectedToMove) return true;
+      const dx = pos.left - tempMovePosition.left;
+      const dy = pos.top - tempMovePosition.top;
+      return Math.sqrt(dx * dx + dy * dy) > threshold;
+    });
+  };
+
+  // ------------------------- 主介面 ------------------------- //
 
   return (
     <div className="kcafe-container" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
@@ -204,48 +221,32 @@ const KCafe = ({ hideMenu = false }) => {
           selectedToMove={selectedToMove}
           tempMovePosition={tempMovePosition}
           confirmSeat={confirmSeat}
+          cancelAddSeat={cancelAddSeat}
           checkOverlap={checkOverlap}
+          checkMoveOverlap={checkMoveOverlap}
           positions={positions}
         />
       )}
 
       <h1>Welcome to KCafe!</h1>
       <h2>
-        現在時間：{currentTime.toLocaleString()}
-        <br/>
+        現在時間：{currentTime.toLocaleString()}<br />
         目前剩餘座位：<span className="remaining">{seats.filter(seat => !seat).length}</span>/{seats.length}
       </h2>
 
-      <div className="background">
-        <img src="/img/KCafe.jpg" alt="KCafe Background" className="bg-image" />
-        {positions.map((seat, index) => (
-          <Seat
-            key={seat.id}
-            id={seat.id}
-            left={seat.left}
-            top={seat.top}
-            occupied={seats[index]}
-            isSelectedForMove={moveMode && selectedToMove === index}
-            isSelectedForDelete={deleteMode && selectedToDelete === index}
-            tempMovePosition={tempMovePosition}
-            moveMode={moveMode}
-            mode={mode}
-            pendingSeat={pendingSeat}
-            deleteMode={deleteMode}
-            handleToggleSeat={(e) => toggleSeat(index, e)}
-            handleMouseDown={(e) => handleMouseDown(index, e)}
-          />
-        ))}
-        {pendingSeat && (
-          <img
-            src='/img/g_circle.png'
-            alt="New Seat"
-            className="seat pending"
-            style={{ left: `${pendingSeat.left}%`, top: `${pendingSeat.top}%` }}
-            onMouseDown={(e) => handleMouseDown('pending', e)}
-          />
-        )}
-      </div>
+      <Background
+        positions={positions}
+        seats={seats}
+        pendingSeat={pendingSeat}
+        tempMovePosition={tempMovePosition}
+        selectedToDelete={selectedToDelete}
+        selectedToMove={selectedToMove}
+        moveMode={moveMode}
+        deleteMode={deleteMode}
+        mode={mode}
+        toggleSeat={toggleSeat}
+        handleMouseDown={handleMouseDown}
+      />
     </div>
   );
 };

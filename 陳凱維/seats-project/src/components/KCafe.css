@@ -184,3 +184,59 @@ body {
     opacity: 0.5;
   }
 }
+
+/* 桌子容器 */
+.table-container {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+/* 桌子本體 */
+.table {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #666;
+  border-radius: 8px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 客滿時的樣式 */
+.table.full {
+  background-color: #f88;
+}
+
+/* 桌號編號 */
+.table-id {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* 容量顯示 */
+.table-info {
+  font-size: 12px;
+}
+
+/* +/- 控制按鈕 */
+.table-controls {
+  margin-top: 4px;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.table-controls button {
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.table-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

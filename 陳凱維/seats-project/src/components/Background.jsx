@@ -1,10 +1,13 @@
 import React from 'react';
 import Seat from './Seat';
+import Table from './Table';
 import './KCafe.css';
 
 const Background = ({
   positions,             
-  seats,                 
+  seats,
+  tables,
+  updateTableOccupied,                 
   pendingSeat,           
   tempMovePosition,      
   selectedToDelete,     
@@ -19,6 +22,20 @@ const Background = ({
     <div className="background">
       {/* 背景圖片 */}
       <img src="/img/KCafe.jpg" alt="KCafe Background" className="bg-image" />
+
+      {/* ★ 先渲染桌子 */}
+      {tables.map((tbl) => (
+        <Table
+          key={tbl.id}
+          id={tbl.id}
+          left={tbl.left}
+          top={tbl.top}
+          capacity={tbl.capacity}
+          occupied={tbl.occupied}
+          mode={mode}                            // 傳入當前模式
+          updateOccupied={updateTableOccupied}   // 傳入更新函式
+        />
+      ))}
 
       {/* 渲染所有座位 */}
       {positions.map((seat, index) => (

@@ -4,6 +4,13 @@ import Navbar from './Navbar';
 import './KCafe.css';
 
 // 初始座位配置
+// ★ 新增：三張桌子的初始資料
+const initialTables = [
+  { id: 'A', left: 20, top: 20, capacity: 4, occupied: 2 },
+  { id: 'B', left: 50, top: 50, capacity: 6, occupied: 0 },
+  { id: 'C', left: 80, top: 30, capacity: 2, occupied: 1 },
+];
+
 const initialSeatPositions = [
   { id: 1, left: 32.4, top: 9.0 }, { id: 2, left: 42.8, top: 9.0 }, { id: 3, left: 53.2, top: 9.0 }, { id: 4, left: 63.6, top: 9.0 },
   { id: 5, left: 32.4, top: 17.3 }, { id: 6, left: 42.8, top: 17.3 }, { id: 7, left: 53.2, top: 17.3 }, { id: 8, left: 63.6, top: 17.3 },
@@ -32,6 +39,8 @@ const KCafe = ({ hideMenu = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // 操作狀態
+  // ★ 新增：桌子狀態
+  const [tables, setTables] = useState(initialTables);
   const [dragging, setDragging] = useState(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [pendingSeat, setPendingSeat] = useState(null);
@@ -71,6 +80,15 @@ const KCafe = ({ hideMenu = false }) => {
   }, [seats, positions]);
 
   // ------------------------- 功能邏輯區 ------------------------- //
+
+  // 更新某張桌子的佔用人數：delta 可以是 +1 或 -1
+  const updateTableOccupied = (id, delta) => {
+    setTables(tables.map(tbl => {
+      if (tbl.id !== id) return tbl;
+      const newOcc = Math.max(0, Math.min(tbl.capacity, tbl.occupied + delta));
+      return { ...tbl, occupied: newOcc };
+    }));
+  };
 
   // 座位切換
   const toggleSeat = (index, e) => {
@@ -237,6 +255,8 @@ const KCafe = ({ hideMenu = false }) => {
       <Background
         positions={positions}
         seats={seats}
+        tables={tables}                              // 傳入桌子資料
+        updateTableOccupied={updateTableOccupied}    // 傳入更新函式
         pendingSeat={pendingSeat}
         tempMovePosition={tempMovePosition}
         selectedToDelete={selectedToDelete}

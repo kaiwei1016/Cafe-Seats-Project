@@ -1,0 +1,40 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Seat",
+    "type": "object",
+    "properties": {
+      "ID": {
+        "type": "string",
+        "description": "每個座位的唯一識別碼"
+      },
+      "Name": {
+        "type": "string",
+        "description": "座位的名稱，例如 A3、B4"
+      },
+      "Availability": {
+        "type": "string",
+        "enum": ["有人", "沒有人"],
+        "description": "座位目前的使用狀態"
+      },
+      "Xpos": {
+        "type": "number",
+        "description": "該座位在圖片上的 X 座標"
+      },
+      "Ypos": {
+        "type": "number",
+        "description": "該座位在圖片上的 Y 座標"
+      },
+      "Capacity": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "座位最多可容納的人數"
+      },
+      "CurrentOccupancy": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "目前已使用人數"
+      }
+    },
+    "required": ["ID", "Name", "Availability", "Xpos", "Ypos", "Capacity", "CurrentOccupancy"]
+  }
+  

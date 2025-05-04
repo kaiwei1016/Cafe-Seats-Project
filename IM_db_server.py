@@ -21,7 +21,6 @@ collection = db["im_final_project"]
 
 # ======== Pydantic Schemas ========
 class SeatBase(BaseModel):
-    SeatID: str = Field(..., description="座位ID，例如 1f_A3")
     Name: str = Field(..., description="座位名稱，例如 A3")
     Availability: bool = Field(..., description="座位是否有人")
     Xpos: float = Field(..., description="X 座標")
@@ -40,7 +39,6 @@ class SeatBase(BaseModel):
         extra = "forbid"
 
 class SeatUpdate(BaseModel):
-    SeatID: Optional[str] = Field(None, description="座位代碼，例如 1F_A3")
     Name: Optional[str]
     Availability: Optional[bool]
     Xpos: Optional[float]
@@ -69,7 +67,6 @@ class SeatStatusPatch(BaseModel):
 def format_seat(seat: dict) -> dict:
     return {
         "id": str(seat.get("_id")),
-        "SeatID": seat.get("SeatID"),
         "Name": seat.get("Name"),
         "Availability": seat.get("Availability"),
         "Xpos": seat.get("Xpos"),
@@ -96,7 +93,7 @@ def create_seat(seat: SeatBase):
     result = collection.insert_one(seat_dict)
     seat_dict["_id"] = result.inserted_id
     return format_seat(seat_dict)
-# patch for editting
+
 @app.patch("/seats/{seat_id}", response_model=SeatResponse)
 def update_seat(seat_id: str, seat: SeatUpdate):
     update_data = {k: v for k, v in seat.dict(exclude_unset=True).items()}
@@ -106,26 +103,25 @@ def update_seat(seat_id: str, seat: SeatUpdate):
     updated = collection.find_one({"_id": ObjectId(seat_id)})
     return format_seat(updated)
 
-# patch for status
-@app.patch("/seats/{seat_code}/status", response_model=SeatResponse)
-def update_seat_status(seat_code: str, status: SeatStatusPatch):
+@app.patch("/seats/name/{seat_name}/status", response_model=SeatResponse)
+def update_seat_status(seat_name: str, status: SeatStatusPatch):
     update_data = {
         "Availability": status.Availability,
         "CurrentOccupancy": status.CurrentOccupancy,
         "StatusUpdateTime": datetime.now()
     }
-    result = collection.update_one({"SeatID": seat_code}, {"$set": update_data})
+    result = collection.update_one({"Name": seat_name}, {"$set": update_data})
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="SeatID not found")
-    updated = collection.find_one({"SeatID": seat_code})
+        raise HTTPException(status_code=404, detail="Seat Name not found")
+    updated = collection.find_one({"Name": seat_name})
     return format_seat(updated)
 
-@app.delete("/seats/{seat_code}")
-def delete_seat(seat_code: str):
-    result = collection.delete_one({"SeatID": seat_code})
+@app.delete("/seats/name/{seat_name}")
+def delete_seat(seat_name: str):
+    result = collection.delete_one({"Name": seat_name})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail=f"SeatID '{seat_code}' not found")
-    return {"message": f"Seat '{seat_code}' deleted successfully"}
+        raise HTTPException(status_code=404, detail=f"Seat '{seat_name}' not found")
+    return {"message": f"Seat '{seat_name}' deleted successfully"}
 
 if __name__ == "__main__":
     import uvicorn

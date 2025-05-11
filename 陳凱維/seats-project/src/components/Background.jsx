@@ -1,16 +1,12 @@
 import React from 'react';
-import Seat from './Seat';
 import Table from './Table';
 import './KCafe.css';
 
 const Background = ({
-  positions,
-  seats,
   tables,
   pendingTable,
   updateTableOccupied,
   mode,
-  toggleSeat,
   handleTableMouseDown,
   deleteTableMode,
   selectedToDeleteTable,
@@ -30,18 +26,18 @@ const Background = ({
         onDragStart={e => e.preventDefault()}
       />
 
-
       {/* 渲染桌子 */}
       {tables.map(tbl => (
         <Table
-          tableIndex={tbl.index} 
+          key={tbl.index}
+          tableIndex={tbl.index}
           id={tbl.id}
           left={tbl.left}
           top={tbl.top}
           capacity={tbl.capacity}
           occupied={tbl.occupied}
           mode={mode}
-          updateOccupied={(delta) => updateTableOccupied(tbl.index, delta)}
+          updateOccupied={delta => updateTableOccupied(tbl.index, delta)}
           onMouseDown={e => handleTableMouseDown(tbl.index, e)}
           deleteTableMode={deleteTableMode}
           selectedToDeleteTable={selectedToDeleteTable}
@@ -52,35 +48,19 @@ const Background = ({
         />
       ))}
 
-          {/* 如果有 pendingTable，就用半透明方式先顯示它，並能拖曳 */}
-    {pendingTable && (
-      <div
-        className="table-container pending"
-        style={{
-          left:  `${pendingTable.left}%`,
-          top:   `${pendingTable.top}%`
-        }}
-        onMouseDown={e => handleTableMouseDown(pendingTable.index, e)}
-      >
-        <div className="table pending">
-          <div className="table-id">{pendingTable.id}</div>
-          <div className="table-info">0/{pendingTable.capacity}</div>
+      {/* pendingTable 的半透明預覽 */}
+      {pendingTable && (
+        <div
+          className="table-container pending"
+          style={{ left: `${pendingTable.left}%`, top: `${pendingTable.top}%` }}
+          onMouseDown={e => handleTableMouseDown(pendingTable.index, e)}
+        >
+          <div className="table pending">
+            <div className="table-id">{pendingTable.id}</div>
+            <div className="table-info">0/{pendingTable.capacity}</div>
+          </div>
         </div>
-      </div>
-    )}
-
-      {/* 渲染所有座位（只剩業務模式下點擊切換佔用） */}
-      {positions.map((seat, idx) => (
-        <Seat
-          key={seat.id}
-          id={seat.id}
-          left={seat.left}
-          top={seat.top}
-          occupied={seats[idx]}
-          mode={mode}
-          handleToggleSeat={e => toggleSeat(idx, e)}
-        />
-      ))}
+      )}
     </div>
   );
 };

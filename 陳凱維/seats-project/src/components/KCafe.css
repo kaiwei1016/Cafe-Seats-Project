@@ -31,6 +31,13 @@ body {
   padding: 10px;
   background-color: #f0f0f0;
   font-size: 18px;
+  position: relative;  /* 如果还不是定位元素要加上 */
+  z-index: 100;
+}
+
+/* 再把下拉菜单提到更上（可选） */
+.menu-dropdown {
+  z-index: 101;
 }
 
 .navbar button {
@@ -429,5 +436,53 @@ body {
 .table-container:hover .edit-table-button {
   background: #eee;
 }
+
+.qr-options select {
+  width: 100px;
+}
+.qr-options button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 定義 glow 動畫：從小到大再回到小 */
+@keyframes table-glow {
+  0% {
+    box-shadow: 0 0 8px 2px rgba(255, 0, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 16px 8px rgba(255, 0, 0, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 8px 2px rgba(255, 0, 0, 0.6);
+  }
+}
+
+@keyframes partial-glow {
+  0% {
+    box-shadow: 0 0 8px 2px rgba(255, 235, 59, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 16px 8px rgba(255, 235, 59, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 8px 2px rgba(255, 235, 59, 0.6);
+  }
+}
+
+/* 部分佔用：黃色光暈 */
+.table.partial {
+  animation: partial-glow 2s infinite ease-in-out alternate;
+  /* 初始色改成黃光 */
+  box-shadow: 0 0 8px 2px rgba(255, 235, 59, 0.6);
+}
+
+/* 客滿：紅色光暈 */
+.table.full {
+  animation: table-glow 2s infinite ease-in-out alternate;
+  /* 初始色改成紅光 */
+  box-shadow: 0 0 8px 2px rgba(255, 136, 136, 0.6);
+}
+
 
 

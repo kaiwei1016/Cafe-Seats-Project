@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './KCafe.css';
 
@@ -29,31 +29,11 @@ const Navbar = ({
   const navigate = useNavigate();
   const [showQRCodeOptions, setShowQRCodeOptions] = useState(false);
   const [selectedSeatForQR, setSelectedSeatForQR] = useState('');
-  const menuRef = useRef(null);
+
   const isMenuLocked = pendingSeat !== null || deleteMode || moveMode;
 
-  // 點擊外部時自動關閉漢堡選單與 QR code 選單
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-        setShowQRCodeOptions(false);
-      }
-    };
-
-    if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [menuOpen]);
-
   return (
-    <nav className="navbar" ref={menuRef}>
+    <nav className="navbar">
       {/* 模式顯示 */}
       <div className="mode-display">
         目前模式：{mode === 'business' ? '營業模式' : mode === 'edit' ? '編輯模式' : '觀察模式'}
@@ -62,12 +42,7 @@ const Navbar = ({
       {/* ☰ 漢堡選單按鈕 */}
       <button
         className="menu-button"
-        onClick={() => {
-          if (menuOpen) {
-            setShowQRCodeOptions(false);
-          }
-          setMenuOpen(!menuOpen);
-        }}
+        onClick={() => setMenuOpen(!menuOpen)}
         disabled={isMenuLocked}
       >
         ☰
@@ -106,7 +81,7 @@ const Navbar = ({
       {/* 顧客模式切換按鈕 */}
       {mode === 'view' && (
         <button className="go-guest-button" onClick={() => window.open('/guest', '_blank')}>
-          查看顧客版
+          切到顧客版
         </button>
       )}
 

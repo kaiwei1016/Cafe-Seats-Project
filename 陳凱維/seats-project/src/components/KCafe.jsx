@@ -13,13 +13,7 @@ const initialTables = [
 
 const initialSeatPositions = [
   { id: 1, left: 32.4, top: 9.0 }, { id: 2, left: 42.8, top: 9.0 }, { id: 3, left: 53.2, top: 9.0 }, { id: 4, left: 63.6, top: 9.0 },
-  { id: 5, left: 32.4, top: 17.3 }, { id: 6, left: 42.8, top: 17.3 }, { id: 7, left: 53.2, top: 17.3 }, { id: 8, left: 63.6, top: 17.3 },
-  { id: 9, left: 32.4, top: 26.3 }, { id: 10, left: 42.8, top: 26.3 }, { id: 11, left: 53.2, top: 26.3 }, { id: 12, left: 63.6, top: 26.3 },
-  { id: 13, left: 32.4, top: 34.6 }, { id: 14, left: 42.8, top: 34.6 }, { id: 15, left: 53.2, top: 34.6 }, { id: 16, left: 63.6, top: 34.6 },
-  { id: 17, left: 34.0, top: 75.5 }, { id: 18, left: 48.0, top: 75.5 }, { id: 19, left: 72.0, top: 75.5 }, { id: 20, left: 86.0, top: 75.5 },
-  { id: 21, left: 9.0, top: 11.0 }, { id: 22, left: 17.3, top: 11.7 }, { id: 23, left: 9.0, top: 20.0 }, { id: 24, left: 17.0, top: 20.3 },
-  { id: 25, left: 9.0, top: 34.8 }, { id: 26, left: 17.0, top: 35.6 }, { id: 27, left: 9.0, top: 43.8 }, { id: 28, left: 17.0, top: 43.8 },
-  { id: 29, left: 8.8, top: 59.7 }, { id: 30, left: 17.0, top: 60.0 }, { id: 31, left: 8.8, top: 67.7 }, { id: 32, left: 16.3, top: 67.8 },
+
 ];
 
 const KCafe = ({ hideMenu = false }) => {
@@ -39,7 +33,6 @@ const KCafe = ({ hideMenu = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // 操作狀態
-  // ★ 新增：桌子狀態
   const [tables, setTables] = useState(initialTables);
   const [dragging, setDragging] = useState(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -88,6 +81,40 @@ const KCafe = ({ hideMenu = false }) => {
       const newOcc = Math.max(0, Math.min(tbl.capacity, tbl.occupied + delta));
       return { ...tbl, occupied: newOcc };
     }));
+  };
+
+  const [draggingTable, setDraggingTable] = useState(null);
+  
+
+   // 開始按下桌子
+   const handleTableMouseDown = (id, e) => {
+    if (mode !== 'edit') return;
+    e.preventDefault();
+    // 跟座位拿 offset
+    const rect = e.target.getBoundingClientRect();
+    setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setDraggingTable(id);
+  };
+
+    // 拖曳中
+    const handleTableMouseMove = (e) => {
+      if (!draggingTable || mode !== 'edit') return;
+      const bg = document.querySelector('.background').getBoundingClientRect();
+      const leftPct = ((e.clientX - bg.left - offset.x) / bg.width) * 100;
+      const topPct  = ((e.clientY - bg.top  - offset.y) / bg.height)* 100;
+      setTables(tables.map(tbl =>
+        tbl.id === draggingTable
+          ? { ...tbl,
+              left: Math.max(0, Math.min(100, leftPct)),
+              top:  Math.max(0, Math.min(100, topPct))
+            }
+          : tbl
+      ));
+    };
+
+      // 拖曳放開
+  const handleTableMouseUp = () => {
+    setDraggingTable(null);
   };
 
   // 座位切換
@@ -218,7 +245,15 @@ const KCafe = ({ hideMenu = false }) => {
   // ------------------------- 主介面 ------------------------- //
 
   return (
-    <div className="kcafe-container" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
+    <div className="kcafe-container" 
+    onMouseMove={e => {
+      handleMouseMove(e);
+      handleTableMouseMove(e);
+    }}
+    onMouseUp={() => {
+      handleMouseUp();
+      handleTableMouseUp();
+    }}>
       {!hideMenu && (
         <Navbar
           mode={mode}
@@ -266,6 +301,7 @@ const KCafe = ({ hideMenu = false }) => {
         mode={mode}
         toggleSeat={toggleSeat}
         handleMouseDown={handleMouseDown}
+        handleTableMouseDown={handleTableMouseDown}
       />
     </div>
   );

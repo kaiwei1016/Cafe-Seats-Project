@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './KCafe.css';
 
-const Table = ({ id, left, top, capacity, occupied, mode, updateOccupied }) => {
+const Table = ({ id, left, top, capacity, occupied, mode, updateOccupied, onMouseDown }) => {
   // 只有營業模式時，才顯示 +/- 按鈕
   const [showControls, setShowControls] = useState(false);
   const isFull = occupied >= capacity;
@@ -18,6 +18,7 @@ const Table = ({ id, left, top, capacity, occupied, mode, updateOccupied }) => {
       className="table-container"
       style={{ left: `${left}%`, top: `${top}%` }}
       onClick={handleClick}
+      onMouseDown={onMouseDown}
     >
       <div className={`table ${isFull ? 'full' : ''}`}>
         <div className="table-id">{id}</div>

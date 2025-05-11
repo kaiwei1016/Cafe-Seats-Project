@@ -16,7 +16,8 @@ const Background = ({
   deleteMode,            
   mode,                  
   toggleSeat,           
-  handleMouseDown        
+  handleMouseDown,
+  handleTableMouseDown         
 }) => {
   return (
     <div className="background">
@@ -34,6 +35,7 @@ const Background = ({
           occupied={tbl.occupied}
           mode={mode}                            // 傳入當前模式
           updateOccupied={updateTableOccupied}   // 傳入更新函式
+          onMouseDown={e => handleTableMouseDown(tbl.id, e)}
         />
       ))}
 

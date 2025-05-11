@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
 import './KCafe.css';
 
 const Navbar = ({
@@ -7,70 +6,133 @@ const Navbar = ({
   menuOpen,
   setMenuOpen,
   setMode,
-  addSeat,
-  pendingSeat,
-  deleteMode,
-  moveMode,
-  startDeleteMode,
-  confirmDelete,
-  cancelDeleteMode,
-  startMoveMode,
-  confirmMove,
-  cancelMoveMode,
-  selectedToDelete,
-  selectedToMove,
-  tempMovePosition,
-  confirmSeat,
-  cancelAddSeat,
-  checkOverlap,
-  checkMoveOverlap,
-  positions
-}) => {
-  const navigate = useNavigate();
-  const [showQRCodeOptions, setShowQRCodeOptions] = useState(false);
-  const [selectedSeatForQR, setSelectedSeatForQR] = useState('');
+  positions,
+  tables,
+  addTable,
+  pendingTable,
+  cancelAddTable,
+  confirmAddTable,
+  startDeleteTableMode,
+  deleteTableMode,
+  selectedToDeleteTable,
+  confirmDeleteTable,
+  cancelDeleteTableMode,
+  startMoveTableMode,
+  moveTableMode,
+  selectedToMoveTable,
+  confirmMoveTable,
+  cancelMoveTableMode,
 
-  const isMenuLocked = pendingSeat !== null || deleteMode || moveMode;
+}) => {
+  const [showQRCodeOptions, setShowQRCodeOptions] = useState(false);
+  const [selectedTableForQR, setSelectedTableForQR] = useState(''); 
+  const menuRef = useRef(null);
+
+  // 點擊漢堡以外區域自動關閉
+  useEffect(() => {
+    const onClickOutside = e => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+        setShowQRCodeOptions(false);
+      }
+    };
+    if (menuOpen) document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [menuOpen, setMenuOpen]);
+
+  // 在桌子操作模式（刪除或移動）時鎖住漢堡選單
+  const isTableAction = deleteTableMode || moveTableMode;
 
   return (
-    <nav className="navbar">
+    <nav className="navbar" ref={menuRef}>
       {/* 模式顯示 */}
       <div className="mode-display">
         目前模式：{mode === 'business' ? '營業模式' : mode === 'edit' ? '編輯模式' : '觀察模式'}
       </div>
 
-      {/* ☰ 漢堡選單按鈕 */}
+      {/* ☰ 漢堡選單 */}
       <button
         className="menu-button"
-        onClick={() => setMenuOpen(!menuOpen)}
-        disabled={isMenuLocked}
+        onClick={() => {
+          setShowQRCodeOptions(false);
+          setMenuOpen(v => !v);
+        }}
+        disabled={isTableAction}
       >
         ☰
       </button>
 
-      {/* 漢堡選單下拉功能表 */}
+      {/* 編輯模式下：新增／刪除／移動桌子 */}
+      {mode === 'edit' && (
+                /* 如果有 pendingTable，先顯示「確認新增／取消新增」 */
+                pendingTable ? (
+                  <>
+                    <button onClick={confirmAddTable}>
+                      確認新增
+                    </button>
+                    <button onClick={cancelAddTable}>
+                      取消新增
+                    </button>
+                  </>
+                ) : 
+        moveTableMode ? (
+          /* 移動桌子模式：顯示 確認移動／取消移動 */
+          <>
+            <button
+              onClick={confirmMoveTable}
+              disabled={selectedToMoveTable == null}
+            >
+              確認移動
+            </button>
+            <button onClick={cancelMoveTableMode}>
+              取消移動
+            </button>
+          </>
+        ) : deleteTableMode ? (
+          /* 刪除桌子模式：顯示 確認刪除／取消刪除 */
+          <>
+            <button
+              onClick={confirmDeleteTable}
+              disabled={selectedToDeleteTable == null}
+            >
+              確認刪除
+            </button>
+            <button onClick={cancelDeleteTableMode}>
+              取消刪除
+            </button>
+          </>
+        ) : (
+          /* 編輯預設：顯示 新增／刪除／移動 */
+          <>
+            <button onClick={addTable}>新增桌子</button>
+            <button onClick={startDeleteTableMode}>刪除桌子</button>
+            <button onClick={startMoveTableMode}>移動桌子</button>
+          </>
+        )
+      )}
+
+      {/* 漢堡選單內容 */}
       {menuOpen && (
         <div className="menu-dropdown">
           <button onClick={() => { setMode('business'); setMenuOpen(false); }}>營業模式</button>
-          <button onClick={() => { setMode('edit'); setMenuOpen(false); }}>編輯模式</button>
-          <button onClick={() => { setMode('view'); setMenuOpen(false); }}>觀察模式</button>
-          <button onClick={() => setShowQRCodeOptions(!showQRCodeOptions)}>取得 QR code</button>
+          <button onClick={() => { setMode('edit');     setMenuOpen(false); }}>編輯模式</button>
+          <button onClick={() => { setMode('view');     setMenuOpen(false); }}>觀察模式</button>
+          <button onClick={() => setShowQRCodeOptions(v => !v)}>取得 QR code</button>
 
-          {/* QR code 下載區塊 */}
           {showQRCodeOptions && (
             <div className="qr-options">
               <select
-                value={selectedSeatForQR}
-                onChange={(e) => setSelectedSeatForQR(e.target.value)}
+                value={selectedTableForQR}
+                onChange={e => setSelectedTableForQR(e.target.value)}
               >
-                <option value="">選擇座位</option>
-                {positions.map((seat) => (
-                  <option key={seat.id} value={seat.id}>
-                    Seat {seat.id}
+                <option value="">選擇桌號</option>
+                {tables.map(t => (
+                  <option key={t.index} value={t.id}>
+                    桌號 {t.id} (# {t.index})
                   </option>
                 ))}
               </select>
-              <button onClick={() => { /* 尚未實作 */ }}>
+              <button disabled={!selectedTableForQR}>
                 下載
               </button>
             </div>
@@ -78,59 +140,14 @@ const Navbar = ({
         </div>
       )}
 
-      {/* 顧客模式切換按鈕 */}
+      {/* 觀察模式：切到顧客版 */}
       {mode === 'view' && (
-        <button className="go-guest-button" onClick={() => window.open('/guest', '_blank')}>
-          切到顧客版
+        <button
+          className="go-guest-button"
+          onClick={() => window.open('/guest', '_blank')}
+        >
+          查看顧客版
         </button>
-      )}
-
-      {/* 編輯模式下的控制按鈕區塊 */}
-      {mode === 'edit' && (
-        <div className="edit-controls">
-
-          {/* 新增座位模式 */}
-          {pendingSeat ? (
-            <>
-              <button onClick={confirmSeat} disabled={!checkOverlap()}>
-                {checkOverlap() ? '確認新增' : <span className="error-text">座位重疊</span>}
-              </button>
-              <button onClick={cancelAddSeat}>取消新增</button>
-            </>
-          )
-
-          /* 刪除座位模式 */
-          : deleteMode ? (
-            <>
-              <button onClick={confirmDelete} disabled={selectedToDelete === null}>確認刪除</button>
-              <button onClick={cancelDeleteMode}>取消刪除</button>
-            </>
-          )
-
-          /* 移動座位模式 */
-          : moveMode ? (
-            <>
-              <button onClick={confirmMove} disabled={selectedToMove === null || !tempMovePosition || !checkMoveOverlap()}>
-                {selectedToMove === null || !tempMovePosition
-                  ? '確認移動'
-                  : (checkMoveOverlap()
-                    ? '確認移動'
-                    : <span className="error-text">座位重疊</span>
-                  )}
-              </button>
-              <button onClick={cancelMoveMode}>取消移動</button>
-            </>
-          )
-
-          /* 編輯預設狀態按鈕 */
-          : (
-            <>
-              <button onClick={addSeat}>新增座位</button>
-              <button onClick={startDeleteMode}>刪除座位</button>
-              <button onClick={startMoveMode}>移動座位</button>
-            </>
-          )}
-        </div>
       )}
     </nav>
   );

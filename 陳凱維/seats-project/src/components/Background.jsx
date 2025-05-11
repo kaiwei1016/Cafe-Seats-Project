@@ -4,71 +4,83 @@ import Table from './Table';
 import './KCafe.css';
 
 const Background = ({
-  positions,             
+  positions,
   seats,
   tables,
-  updateTableOccupied,                 
-  pendingSeat,           
-  tempMovePosition,      
-  selectedToDelete,     
-  selectedToMove,       
-  moveMode,              
-  deleteMode,            
-  mode,                  
-  toggleSeat,           
-  handleMouseDown,
-  handleTableMouseDown         
+  pendingTable,
+  updateTableOccupied,
+  mode,
+  toggleSeat,
+  handleTableMouseDown,
+  deleteTableMode,
+  selectedToDeleteTable,
+  onSelectDeleteTable,
+  onEditTable,
+  moveTableMode,
+  selectedToMoveTable
 }) => {
   return (
     <div className="background">
       {/* 背景圖片 */}
-      <img src="/img/KCafe.jpg" alt="KCafe Background" className="bg-image" />
+      <img
+        src="/img/KCafe.jpg"
+        alt="KCafe Background"
+        className="bg-image"
+        draggable={false}
+        onDragStart={e => e.preventDefault()}
+      />
 
-      {/* ★ 先渲染桌子 */}
-      {tables.map((tbl) => (
+
+      {/* 渲染桌子 */}
+      {tables.map(tbl => (
         <Table
-          key={tbl.id}
+          tableIndex={tbl.index} 
           id={tbl.id}
           left={tbl.left}
           top={tbl.top}
           capacity={tbl.capacity}
           occupied={tbl.occupied}
-          mode={mode}                            // 傳入當前模式
-          updateOccupied={updateTableOccupied}   // 傳入更新函式
-          onMouseDown={e => handleTableMouseDown(tbl.id, e)}
+          mode={mode}
+          updateOccupied={(delta) => updateTableOccupied(tbl.index, delta)}
+          onMouseDown={e => handleTableMouseDown(tbl.index, e)}
+          deleteTableMode={deleteTableMode}
+          selectedToDeleteTable={selectedToDeleteTable}
+          onSelectDeleteTable={() => onSelectDeleteTable(tbl.index)}
+          onEdit={() => onEditTable(tbl.index)}
+          moveTableMode={moveTableMode}
+          selectedToMoveTable={selectedToMoveTable}
         />
       ))}
 
-      {/* 渲染所有座位 */}
-      {positions.map((seat, index) => (
+          {/* 如果有 pendingTable，就用半透明方式先顯示它，並能拖曳 */}
+    {pendingTable && (
+      <div
+        className="table-container pending"
+        style={{
+          left:  `${pendingTable.left}%`,
+          top:   `${pendingTable.top}%`
+        }}
+        onMouseDown={e => handleTableMouseDown(pendingTable.index, e)}
+      >
+        <div className="table pending">
+          <div className="table-id">{pendingTable.id}</div>
+          <div className="table-info">0/{pendingTable.capacity}</div>
+        </div>
+      </div>
+    )}
+
+      {/* 渲染所有座位（只剩業務模式下點擊切換佔用） */}
+      {positions.map((seat, idx) => (
         <Seat
           key={seat.id}
           id={seat.id}
           left={seat.left}
           top={seat.top}
-          occupied={seats[index]}
-          isSelectedForMove={moveMode && selectedToMove === index}
-          isSelectedForDelete={deleteMode && selectedToDelete === index}
-          tempMovePosition={tempMovePosition}
-          moveMode={moveMode}
+          occupied={seats[idx]}
           mode={mode}
-          pendingSeat={pendingSeat}
-          deleteMode={deleteMode}
-          handleToggleSeat={(e) => toggleSeat(index, e)}
-          handleMouseDown={(e) => handleMouseDown(index, e)}
+          handleToggleSeat={e => toggleSeat(idx, e)}
         />
       ))}
-
-      {/* 新增中的座位（pending） */}
-      {pendingSeat && (
-        <img
-          src='/img/g_circle.png'
-          alt="New Seat"
-          className="seat pending"
-          style={{ left: `${pendingSeat.left}%`, top: `${pendingSeat.top}%` }}
-          onMouseDown={(e) => handleMouseDown('pending', e)}
-        />
-      )}
     </div>
   );
 };

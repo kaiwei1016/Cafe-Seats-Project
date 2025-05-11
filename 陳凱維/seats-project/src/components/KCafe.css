@@ -3,9 +3,19 @@ body {
   font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
 }
 
+
 .kcafe-container {
   text-align: center;
   position: relative;
+}
+
+/* 如果只想改 KCafe 裡的 h1，可以更精準： */
+.kcafe-container > h1 {
+  font-size: 2.5rem;
+}
+
+.kcafe-container > h2 {
+  font-size: 1.1rem;
 }
 
 .remaining {
@@ -92,7 +102,7 @@ body {
 .background {
   position: relative;
   width: 100vw;
-  height: calc(100vw * 0.75);
+  height: calc(100vw);
   overflow: hidden;
 }
 
@@ -100,6 +110,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  -webkit-user-drag: none;
 }
 
 /* --- Seats --- */
@@ -192,6 +203,11 @@ body {
   text-align: center;
 }
 
+.table-container:hover {
+  /* 先維持原本的位移，然後再放大 */
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
 /* 桌子本體 */
 .table {
   width: 50px;
@@ -208,6 +224,11 @@ body {
 /* 客滿時的樣式 */
 .table.full {
   background-color: #f88;
+}
+
+/* 部分佔用：微微染色 */
+.table.partial {
+  background-color: #ffeb3b; /* 黃色，代表部分有人 */
 }
 
 /* 桌號編號 */
@@ -240,3 +261,173 @@ body {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ── 「新增／刪除桌子」按鈕共用樣式 ── */
+.add-table-button,
+.delete-table-button {
+  padding: 5px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  margin: 0 5px;
+  background-color: #fff;
+  border: 1px solid #666;
+  border-radius: 4px;
+}
+.add-table-button:disabled,
+.delete-table-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 刪除模式下，選中的桌子要高亮 ── */
+.table-container.selected-delete .table {
+  /* 加一圈紅色虛線框 */
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8);
+}
+
+/* （可選）讓 .table-container.selected-delete 本身也微微半透明 */
+.table-container.selected-delete {
+  opacity: 0.8;
+}
+
+/* 如果你把 pending class 放在 .table-container 上，則這樣寫 */
+.table-container.pending {
+  opacity: 0.9;
+  border: 2px dashed rgb(4, 255, 4);
+  box-sizing: border-box;
+}
+
+/* 禁止桌子被選取文字，並在滑鼠移到桌子上時顯示 pointer 游標 */
+.table-container,
+.table-container .table {
+  user-select: none;
+  cursor: pointer;
+}
+
+.table-container .table {
+  position: relative;
+}
+
+.table-container .table-controls {
+  position: absolute;
+  bottom: -24px;        /* 根據按鈕高度微調這個值 */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+}
+
+/* 編輯按鈕同理 */
+.table-container .edit-table-button {
+  position: absolute;
+  bottom: -25px;        /* 根據按鈕大小微調 */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+/* 編輯按鈕文字水平排列、不換行 */
+.edit-table-button {
+  display: inline-flex;         /* 以 flex-row 排列 */
+  flex-direction: row;          /* 水平排列 */
+  align-items: center;          /* 垂直置中 */
+  justify-content: center;      /* 水平置中 */
+  white-space: nowrap;          /* 不自動換行 */
+}
+
+/* --- Modal Form Styles --- */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 320px;
+  max-width: 90%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.modal h3 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.modal label input,
+.modal label select {
+  width: 100%;
+  padding: 6px 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.modal-actions button {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-actions button:first-child {
+  background-color: #0077cc;
+  color: #fff;
+}
+
+.modal-actions button:first-child:hover {
+  background-color: #005fa3;
+}
+
+.modal-actions button:last-child {
+  background-color: #ccc;
+  color: #333;
+}
+
+.modal-actions button:last-child:hover {
+  background-color: #aaa;
+}
+
+/* Table 下方的編輯按鈕 */
+.edit-table-button {
+  margin-top: 0px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #666;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+/* 當滑鼠移到整個桌子容器時，讓編輯按鈕變色 */
+.table-container:hover .edit-table-button {
+  background: #eee;
+}
+
+

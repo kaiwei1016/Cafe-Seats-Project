@@ -3,305 +3,425 @@ import Background from './Background';
 import Navbar from './Navbar';
 import './KCafe.css';
 
-// 初始座位配置
-// ★ 新增：三張桌子的初始資料
+
+// 初始桌子資料
 const initialTables = [
-  { id: 'A', left: 20, top: 20, capacity: 4, occupied: 2 },
-  { id: 'B', left: 50, top: 50, capacity: 6, occupied: 0 },
-  { id: 'C', left: 80, top: 30, capacity: 2, occupied: 1 },
+  { index: 1, id: 'A', left: 20, top: 20, capacity: 4, occupied: 2, description: '' },
+  { index: 2, id: 'B', left: 50, top: 50, capacity: 6, occupied: 0, description: '' },
+  { index: 3, id: 'C', left: 80, top: 30, capacity: 2, occupied: 1, description: '' },
 ];
 
+// 初始座位配置（只保留前 4 個示範）
 const initialSeatPositions = [
-  { id: 1, left: 32.4, top: 9.0 }, { id: 2, left: 42.8, top: 9.0 }, { id: 3, left: 53.2, top: 9.0 }, { id: 4, left: 63.6, top: 9.0 },
-
 ];
 
 const KCafe = ({ hideMenu = false }) => {
-  // 狀態管理
+  // 座位佔用狀態
   const [seats, setSeats] = useState(() => {
-    const savedSeats = localStorage.getItem('kcafe_seats');
-    return savedSeats ? JSON.parse(savedSeats) : Array(initialSeatPositions.length).fill(false);
+    const saved = localStorage.getItem('kcafe_seats');
+    return saved ? JSON.parse(saved) : Array(initialSeatPositions.length).fill(false);
   });
+  const [positions] = useState(initialSeatPositions);
 
-  const [positions, setPositions] = useState(() => {
-    const savedPositions = localStorage.getItem('kcafe_positions');
-    return savedPositions ? JSON.parse(savedPositions) : initialSeatPositions;
-  });
+  // 桌子狀態
+  const [tables, setTables] = useState(initialTables);
+  const [pendingTable, setPendingTable] = useState(null);
 
+    // 控制「新增桌子」表單的開關
+    const [showAddForm, setShowAddForm] = useState(false);
+    // 暫存表單輸入值：桌號、容量、描述
+    const [newTableInput, setNewTableInput] = useState({
+      id: '',
+      capacity: 4,
+      description: ''
+    });
+  
+  // 刪除桌子模式
+const [deleteTableMode, setDeleteTableMode] = useState(false);
+const [selectedToDeleteTable, setSelectedToDeleteTable] = useState(null);
+
+  // ——— 移動桌子模式 ———
+  const [moveTableMode, setMoveTableMode] = useState(false);
+  const [selectedToMoveTable, setSelectedToMoveTable] = useState(null);
+  const [backupTables, setBackupTables] = useState(null);
+
+
+  // 拖曳桌子
+  const [draggingTable, setDraggingTable] = useState(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  // 時間、模式、菜單
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mode, setMode] = useState('business');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // 操作狀態
-  const [tables, setTables] = useState(initialTables);
-  const [dragging, setDragging] = useState(null);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [pendingSeat, setPendingSeat] = useState(null);
-  const [deleteMode, setDeleteMode] = useState(false);
-  const [moveMode, setMoveMode] = useState(false);
-  const [selectedToDelete, setSelectedToDelete] = useState(null);
-  const [selectedToMove, setSelectedToMove] = useState(null);
-  const [tempMovePosition, setTempMovePosition] = useState(null);
-
-  // 時間顯示
+  // 時間更新
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
+    const t = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(t);
   }, []);
 
-  // 顧客觀察模式自動刷新
+  // 顧客模式自動刷新
   useEffect(() => {
     if (hideMenu) {
       setMode('view');
-      const refresh = setInterval(() => {
-        window.location.reload();
-      }, 5000);
-      return () => clearInterval(refresh);
+      const r = setInterval(() => window.location.reload(), 5000);
+      return () => clearInterval(r);
     }
   }, [hideMenu]);
 
-  // 本地儲存同步
+  // 存 localStorage
   useEffect(() => {
     localStorage.setItem('kcafe_seats', JSON.stringify(seats));
   }, [seats]);
 
-  useEffect(() => {
-    localStorage.setItem('kcafe_seats', JSON.stringify(seats));
-    localStorage.setItem('kcafe_positions', JSON.stringify(positions));
-  }, [seats, positions]);
+  // 計算桌子總人數
+  const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
+  const totalOccupied = tables.reduce((sum, t) => sum + t.occupied, 0);
 
-  // ------------------------- 功能邏輯區 ------------------------- //
-
-  // 更新某張桌子的佔用人數：delta 可以是 +1 或 -1
-  const updateTableOccupied = (id, delta) => {
-    setTables(tables.map(tbl => {
-      if (tbl.id !== id) return tbl;
-      const newOcc = Math.max(0, Math.min(tbl.capacity, tbl.occupied + delta));
-      return { ...tbl, occupied: newOcc };
-    }));
-  };
-
-  const [draggingTable, setDraggingTable] = useState(null);
-  
-
-   // 開始按下桌子
-   const handleTableMouseDown = (id, e) => {
-    if (mode !== 'edit') return;
-    e.preventDefault();
-    // 跟座位拿 offset
-    const rect = e.target.getBoundingClientRect();
-    setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    setDraggingTable(id);
-  };
-
-    // 拖曳中
-    const handleTableMouseMove = (e) => {
-      if (!draggingTable || mode !== 'edit') return;
-      const bg = document.querySelector('.background').getBoundingClientRect();
-      const leftPct = ((e.clientX - bg.left - offset.x) / bg.width) * 100;
-      const topPct  = ((e.clientY - bg.top  - offset.y) / bg.height)* 100;
-      setTables(tables.map(tbl =>
-        tbl.id === draggingTable
-          ? { ...tbl,
-              left: Math.max(0, Math.min(100, leftPct)),
-              top:  Math.max(0, Math.min(100, topPct))
-            }
-          : tbl
-      ));
-    };
-
-      // 拖曳放開
-  const handleTableMouseUp = () => {
-    setDraggingTable(null);
-  };
-
-  // 座位切換
-  const toggleSeat = (index, e) => {
-    if (mode !== 'business' || pendingSeat || deleteMode || moveMode) return;
+  // 切換座位佔用
+  const toggleSeat = (idx, e) => {
+    if (mode !== 'business') return;
     e.stopPropagation();
-    const updatedSeats = [...seats];
-    updatedSeats[index] = !updatedSeats[index];
-    setSeats(updatedSeats);
+    const s = [...seats];
+    s[idx] = !s[idx];
+    setSeats(s);
   };
 
-  // 滑鼠操作（拖曳座位）
-  const handleMouseDown = (index, e) => {
-    if (mode !== 'edit') return;
-    e.preventDefault();
-    const rect = e.target.getBoundingClientRect();
-    setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+// start drag
+const handleTableMouseDown = (index, e) => {
+  if (mode !== 'edit') return;
 
-    if (pendingSeat !== null) setDragging('pending');
-    else if (deleteMode) setSelectedToDelete(index);
-    else if (moveMode) {
-      setSelectedToMove(index);
-      setDragging(index);
-    }
-  };
+  // 只有 pendingTable 模式 或 移動桌子模式 才能開始 drag
+  const isPending = pendingTable && pendingTable.index === index;
+  if (!isPending && !moveTableMode) return;
 
-  const handleMouseMove = (e) => {
-    if (dragging !== null && mode === 'edit') {
-      const container = document.querySelector('.background');
-      const containerRect = container.getBoundingClientRect();
-      const leftPercent = ((e.clientX - containerRect.left - offset.x) / containerRect.width) * 100;
-      const topPercent = ((e.clientY - containerRect.top - offset.y) / containerRect.height) * 100;
+  e.preventDefault();
+  const rect = e.target.getBoundingClientRect();
+  setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  setDraggingTable(index);
+  if (moveTableMode && !isPending) {
+    setSelectedToMoveTable(index);
+  }
+};
 
-      if (dragging === 'pending') {
-        setPendingSeat({ ...pendingSeat, left: Math.max(0, Math.min(100, leftPercent)), top: Math.max(0, Math.min(100, topPercent)) });
-      } else if (moveMode && dragging === selectedToMove) {
-        setTempMovePosition({ left: Math.max(0, Math.min(100, leftPercent)), top: Math.max(0, Math.min(100, topPercent)) });
-      }
-    }
-  };
 
-  const handleMouseUp = () => setDragging(null);
+// during drag
+const handleTableMouseMove = e => {
+  if (draggingTable == null || mode !== 'edit') return;
 
-  // 新增座位
-  const addSeat = () => {
-    if (pendingSeat || deleteMode || moveMode) return;
-    setMenuOpen(false);
-    const newId = positions.length > 0 ? Math.max(...positions.map(p => p.id)) + 1 : 1;
-    setPendingSeat({ id: newId, left: 50, top: 50 });
-  };
+  const bg = document.querySelector('.background').getBoundingClientRect();
+  const leftPct = ((e.clientX - bg.left - offset.x) / bg.width) * 100;
+  const topPct  = ((e.clientY - bg.top  - offset.y) / bg.height)* 100;
 
-  const cancelAddSeat = () => setPendingSeat(null);
+      // 只有在「移動桌子模式」或「正在拖曳 pendingTable」時才更新位置
+      const isPending = pendingTable && draggingTable === pendingTable.index;
+      if (!isPending && !moveTableMode) return;
 
-  const confirmSeat = () => {
-    if (!pendingSeat) return;
-    setPositions([...positions, pendingSeat]);
-    setSeats([...seats, false]);
-    setPendingSeat(null);
-  };
-
-  const checkOverlap = () => {
-    if (!pendingSeat) return true;
-    const threshold = 5;
-    return positions.every(pos => {
-      const dx = pos.left - pendingSeat.left;
-      const dy = pos.top - pendingSeat.top;
-      return Math.sqrt(dx * dx + dy * dy) > threshold;
+  if (pendingTable && draggingTable === pendingTable.index) {
+    setPendingTable({
+      ...pendingTable,
+      left: Math.max(0, Math.min(100, leftPct)),
+      top:  Math.max(0, Math.min(100, topPct))
     });
+  } else {
+    setTables(tables.map(t =>
+      t.index === draggingTable
+        ? { ...t, left: leftPct, top: topPct }
+        : t
+    ));
+  }
+};
+
+// end drag
+const handleTableMouseUp = () => setDraggingTable(null);
+
+
+  // 更新桌子佔用人數
+  const updateTableOccupied = (tableIndex, delta) => {
+    setTables(tables.map(t =>
+      t.index !== tableIndex
+        ? t
+        : { ...t,
+            occupied: Math.max(0, Math.min(t.capacity, t.occupied + delta))
+          }
+    ));
   };
 
-  // 刪除座位
-  const startDeleteMode = () => {
-    if (pendingSeat || moveMode) return;
+// 取得尚未使用的 index
+const getNextTableIndex = () => {
+  const used = tables.map(t => t.index);
+  let idx = 1;
+  while (used.includes(idx)) idx++;
+  return idx;
+};
+
+  // 1) 按下新增桌子：不再直接 setPendingTable，而是打開表單
+  const openAddForm = () => {
+    if (mode !== 'edit' || deleteTableMode || moveTableMode || pendingTable) return;
+    setShowAddForm(true);
     setMenuOpen(false);
-    setDeleteMode(true);
-    setSelectedToDelete(null);
+    // 重置輸入預設
+    setNewTableInput({ id: '', capacity: 4, description: '' });
   };
 
-  const confirmDelete = () => {
-    if (selectedToDelete === null) return;
-    setPositions(positions.filter((_, idx) => idx !== selectedToDelete));
-    setSeats(seats.filter((_, idx) => idx !== selectedToDelete));
-    setDeleteMode(false);
-    setSelectedToDelete(null);
+  // 2) 取消：關閉表單
+  const cancelAddForm = () => {
+    setShowAddForm(false);
   };
 
-  const cancelDeleteMode = () => {
-    setDeleteMode(false);
-    setSelectedToDelete(null);
-  };
-
-  // 移動座位
-  const startMoveMode = () => {
-    if (pendingSeat || deleteMode) return;
-    setMenuOpen(false);
-    setMoveMode(true);
-    setSelectedToMove(null);
-    setTempMovePosition(null);
-  };
-
-  const confirmMove = () => {
-    if (selectedToMove === null || !tempMovePosition) return;
-    const newPositions = [...positions];
-    newPositions[selectedToMove] = { ...newPositions[selectedToMove], ...tempMovePosition };
-    setPositions(newPositions);
-    setMoveMode(false);
-    setSelectedToMove(null);
-    setTempMovePosition(null);
-  };
-
-  const cancelMoveMode = () => {
-    setMoveMode(false);
-    setSelectedToMove(null);
-    setTempMovePosition(null);
-  };
-
-  const checkMoveOverlap = () => {
-    if (selectedToMove === null || !tempMovePosition) return true;
-    const threshold = 5;
-    return positions.every((pos, idx) => {
-      if (idx === selectedToMove) return true;
-      const dx = pos.left - tempMovePosition.left;
-      const dy = pos.top - tempMovePosition.top;
-      return Math.sqrt(dx * dx + dy * dy) > threshold;
+  // 3) 確認：根據輸入值建立 pendingTable
+  const submitAddForm = () => {
+    const index = getNextTableIndex();
+    // 如果使用者沒填 id，就自動取 A,B,C
+    const id = newTableInput.id.trim() || String.fromCharCode(65 + ((index - 1) % 26));
+    setPendingTable({
+      index,
+      id,
+      left:     50,
+      top:      50,
+      capacity: newTableInput.capacity,
+      occupied: 0,
+      description: newTableInput.description.trim()
     });
+    setShowAddForm(false);
   };
 
-  // ------------------------- 主介面 ------------------------- //
+// 2) 按「取消新增」清掉 pendingTable
+const cancelAddTable = () => {
+  setPendingTable(null);
+};
+
+// 3) 按「確認新增」正式把 pendingTable 加進 tables
+const confirmAddTable = () => {
+  if (!pendingTable) return;
+  setTables([...tables, pendingTable]);
+  setPendingTable(null);
+};
+
+  // 進入刪除桌子模式，並清空先前選擇
+const startDeleteTableMode = () => {
+  if (mode !== 'edit') return;
+  setDeleteTableMode(true);
+  setSelectedToDeleteTable(null);
+};
+
+// 確認刪除：真的把該桌從列表移除
+const confirmDeleteTable = () => {
+  if (selectedToDeleteTable == null) return;
+  setTables(tables.filter(t => t.index !== selectedToDeleteTable));
+  setDeleteTableMode(false);
+  setSelectedToDeleteTable(null);
+};
+
+// 取消刪除，回到一般編輯模式
+const cancelDeleteTableMode = () => {
+  setDeleteTableMode(false);
+  setSelectedToDeleteTable(null);
+};
+
+// 進入「移動桌子模式」時備份一次
+const startMoveTableMode = () => {
+  if (mode !== 'edit') return;
+  setMoveTableMode(true);
+  setSelectedToMoveTable(null);
+  setBackupTables(tables.map(t => ({ ...t }))); // <- 只在這裡做一次完整備份
+};
+
+
+  // 確認移動：所有 tables 已經在線上拖曳過，這裡只要關掉模式
+  const confirmMoveTable = () => {
+    setMoveTableMode(false);
+    setSelectedToMoveTable(null);
+    setBackupTables(null);
+  };
+
+  // 取消移動：從備份還原
+  const cancelMoveTableMode = () => {
+    setTables(backupTables);    // <- 把整份備份一次還原
+    setMoveTableMode(false);
+    setSelectedToMoveTable(null);
+    setBackupTables(null);
+  };
+  
+  // 在檔案最上方 import 後，加：
+const [showEditForm, setShowEditForm] = useState(false);
+const [editTableInput, setEditTableInput] = useState({
+  index: null,      // 正在編輯的那張桌子的 index
+  id: '',           // 編輯後的桌號
+  capacity: 4,      // 編輯後的上限人數
+  description: ''   // 編輯後的描述
+});
+
+// 打開表單：把該桌資料填入 editTableInput
+const openEditForm = tableIndex => {
+  const t = tables.find(t => t.index === tableIndex);
+  if (!t) return;
+  setEditTableInput({
+    index:      t.index,
+    id:         t.id,
+    capacity:   t.capacity,
+    description:t.description
+  });
+  setShowEditForm(true);
+};
+
+// 取消：關閉表單
+const cancelEditForm = () => {
+  setShowEditForm(false);
+};
+
+// 儲存：把修改寫回 tables
+const saveEditForm = () => {
+  setTables(tables.map(t =>
+    t.index !== editTableInput.index
+      ? t
+      : {
+          ...t,
+          id:          editTableInput.id.trim() || t.id,
+          capacity:    editTableInput.capacity,
+          description: editTableInput.description.trim()
+        }
+  ));
+  setShowEditForm(false);
+};
 
   return (
-    <div className="kcafe-container" 
-    onMouseMove={e => {
-      handleMouseMove(e);
-      handleTableMouseMove(e);
-    }}
-    onMouseUp={() => {
-      handleMouseUp();
-      handleTableMouseUp();
-    }}>
+    <div
+      className="kcafe-container"
+      onMouseMove={e => handleTableMouseMove(e)}
+      onMouseUp={() => handleTableMouseUp()}
+    >
       {!hideMenu && (
         <Navbar
           mode={mode}
           menuOpen={menuOpen}
           setMenuOpen={setMenuOpen}
           setMode={setMode}
-          addSeat={addSeat}
-          pendingSeat={pendingSeat}
-          deleteMode={deleteMode}
-          moveMode={moveMode}
-          startDeleteMode={startDeleteMode}
-          confirmDelete={confirmDelete}
-          cancelDeleteMode={cancelDeleteMode}
-          startMoveMode={startMoveMode}
-          confirmMove={confirmMove}
-          cancelMoveMode={cancelMoveMode}
-          selectedToDelete={selectedToDelete}
-          selectedToMove={selectedToMove}
-          tempMovePosition={tempMovePosition}
-          confirmSeat={confirmSeat}
-          cancelAddSeat={cancelAddSeat}
-          checkOverlap={checkOverlap}
-          checkMoveOverlap={checkMoveOverlap}
           positions={positions}
+          addTable={openAddForm}
+          pendingTable={pendingTable}
+          cancelAddTable={cancelAddTable}
+          confirmAddTable={confirmAddTable}
+          startDeleteTableMode={startDeleteTableMode}
+          deleteTableMode={deleteTableMode}
+          selectedToDeleteTable={selectedToDeleteTable}
+          confirmDeleteTable={confirmDeleteTable}
+          cancelDeleteTableMode={cancelDeleteTableMode}
+          startMoveTableMode={startMoveTableMode}
+          moveTableMode={moveTableMode}
+          selectedToMoveTable={selectedToMoveTable}
+          confirmMoveTable={confirmMoveTable}
+          cancelMoveTableMode={cancelMoveTableMode}
+          tables={tables} 
         />
       )}
 
-      <h1>Welcome to KCafe!</h1>
+      {/* 新增桌子表單 Modal */}
+{showAddForm && (
+  <div className="modal-backdrop">
+    <div className="modal">
+      <h3>新增桌子 {getNextTableIndex()}</h3>
+      <label>
+        桌號 (ID):
+        <input
+          type="text"
+          value={newTableInput.id}
+          onChange={e => setNewTableInput(v => ({ ...v, id: e.target.value }))}
+          placeholder="留空則自動編號"
+        />
+      </label>
+      <label>
+        上限人數 (Capacity):
+        <input
+          type="number"
+          min={1}
+          value={newTableInput.capacity}
+          onChange={e => setNewTableInput(v => ({ ...v, capacity: +e.target.value }))}
+        />
+      </label>
+      <label>
+        描述 (Description):
+        <input
+          type="text"
+          value={newTableInput.description}
+          onChange={e => setNewTableInput(v => ({ ...v, description: e.target.value }))}
+          placeholder="選填"
+        />
+      </label>
+      <div className="modal-actions">
+        <button onClick={submitAddForm}>新增</button>
+        <button onClick={cancelAddForm}>取消</button>
+      </div>
+    </div>
+  </div>
+)}
+
+{showEditForm && (
+  <div className="modal-backdrop">
+    <div className="modal">
+      <h3>編輯桌子 {editTableInput.index}</h3>
+      
+      <label>
+        桌號 (ID):
+        <input
+          type="text"
+          value={editTableInput.id}
+          onChange={e => setEditTableInput(v => ({ ...v, id: e.target.value }))}
+          placeholder="留空則保留原編號"
+        />
+      </label>
+      
+      <label>
+        上限人數 (Capacity):
+        <input
+          type="number"
+          min={1}
+          value={editTableInput.capacity}
+          onChange={e => setEditTableInput(v => ({ ...v, capacity: +e.target.value }))}
+        />
+      </label>
+      
+      <label>
+        描述 (Description):
+        <input
+          type="text"
+          value={editTableInput.description}
+          onChange={e => setEditTableInput(v => ({ ...v, description: e.target.value }))}
+          placeholder="選填"
+        />
+      </label>
+      
+      <div className="modal-actions">
+        <button onClick={saveEditForm}>儲存</button>
+        <button onClick={cancelEditForm}>取消</button>
+      </div>
+    </div>
+  </div>
+)}
+
+    <h1>Welcome to KCafe!</h1>
       <h2>
-        現在時間：{currentTime.toLocaleString()}<br />
-        目前剩餘座位：<span className="remaining">{seats.filter(seat => !seat).length}</span>/{seats.length}
+        現在時間：{currentTime.toLocaleString()}<br/>
+        目前桌子使用：<span className="remaining">{totalOccupied}</span>/{totalCapacity}
       </h2>
+
 
       <Background
         positions={positions}
         seats={seats}
-        tables={tables}                              // 傳入桌子資料
-        updateTableOccupied={updateTableOccupied}    // 傳入更新函式
-        pendingSeat={pendingSeat}
-        tempMovePosition={tempMovePosition}
-        selectedToDelete={selectedToDelete}
-        selectedToMove={selectedToMove}
-        moveMode={moveMode}
-        deleteMode={deleteMode}
+        tables={tables}
         mode={mode}
         toggleSeat={toggleSeat}
-        handleMouseDown={handleMouseDown}
         handleTableMouseDown={handleTableMouseDown}
+        updateTableOccupied={updateTableOccupied}
+        deleteTableMode={deleteTableMode}
+        selectedToDeleteTable={selectedToDeleteTable}
+        onSelectDeleteTable={setSelectedToDeleteTable}
+        pendingTable={pendingTable}
+        onEditTable={openEditForm}
+        moveTableMode={moveTableMode}
+        selectedToMoveTable={selectedToMoveTable}
       />
     </div>
   );

@@ -8,7 +8,8 @@ const Table = ({
   top,
   capacity,
   occupied,
-  width = 1, height = 1,
+  width = 1,
+  height = 1,
   mode,
   updateOccupied,
   onEdit,
@@ -25,11 +26,10 @@ const Table = ({
   const isFull    = occupied >= capacity;
   const isPartial = occupied > 0 && occupied < capacity;
   const isMoving  = moveTableMode && selectedToMoveTable === tableIndex;
-  const isDeleting = deleteTableMode && selectedToDeleteTable === tableIndex;
-  const sizeW = width * 7;   // 單位 vmin
-  const sizeH = height * 7;
+  const isDeleting= deleteTableMode && selectedToDeleteTable === tableIndex;
+  const sizeW     = width * 7;   // 單位 vmin
+  const sizeH     = height * 7;
 
-  // 點擊桌子本體的行為
   const handleClick = e => {
     e.stopPropagation();
     if (deleteTableMode) {
@@ -37,13 +37,11 @@ const Table = ({
     } else if (mode === 'business') {
       setShowControls(v => !v);
     }
-       if (mode === 'edit' && !deleteTableMode && !moveTableMode) {
-           onEdit();
-           return;
-         }
+    if (mode === 'edit' && !deleteTableMode && !moveTableMode) {
+      onEdit();
+    }
   };
 
-  // 點擊外部時自動關閉 ± 控制
   useEffect(() => {
     const handleOutside = e => {
       if (showControls && containerRef.current && !containerRef.current.contains(e.target)) {
@@ -57,48 +55,44 @@ const Table = ({
   return (
     <div
       ref={containerRef}
-      className={
-        `table-container
-         ${isDeleting ? 'selected-delete' : ''}
-         ${isMoving  ? 'selected-move'   : ''}`
-        .trim().replace(/\s+/g,' ')
-      }
-      style={{ left: `${left}%`, top: `${top}%` }}
+      className={`table-container ${isDeleting? 'selected-delete':''} ${isMoving? 'selected-move':''}`}
+      style={{ left:`${left}%`, top:`${top}%` }}
       onClick={handleClick}
       onMouseDown={onMouseDown}
     >
       <div
-        className={
-          `table
-           ${isFull    ? 'full'    : ''}
-           ${isPartial ? 'partial' : ''}`
-          .trim().replace(/\s+/g,' ')
-        }
-        style={{
-          width:  `${sizeW}vmin`,
-          height: `${sizeH}vmin`
-        }}
+        className={`table ${isFull? 'full':''} ${isPartial? 'partial':''}`}
+        style={{ width:`${sizeW}vmin`, height:`${sizeH}vmin` }}
       >
         <div className="table-id">{id}</div>
         <div className="table-info">{occupied}/{capacity}</div>
+
+        {/* 動態渲染虛線格 */}
+        {Array.from({ length: width - 1 }).map((_, i) => (
+          <div
+            key={`v${i}`}
+            className="grid-line vertical"
+            style={{ left: `${(i+1)*7}vmin` }}
+          />
+        ))}
+        {Array.from({ length: height - 1 }).map((_, i) => (
+          <div
+            key={`h${i}`}
+            className="grid-line horizontal"
+            style={{ top: `${(i+1)*7}vmin` }}
+          />
+        ))}
       </div>
 
       {mode === 'business' && showControls && !deleteTableMode && (
         <div className="table-controls">
-          <button onClick={e => { e.stopPropagation(); updateOccupied(-1); }} disabled={occupied <= 0}>
-            –
-          </button>
-          <button onClick={e => { e.stopPropagation(); updateOccupied(+1); }} disabled={occupied >= capacity}>
-            ＋
-          </button>
+          <button onClick={e=>{ e.stopPropagation(); updateOccupied(-1); }} disabled={occupied<=0}>–</button>
+          <button onClick={e=>{ e.stopPropagation(); updateOccupied(+1); }} disabled={occupied>=capacity}>＋</button>
         </div>
       )}
 
       {mode === 'edit' && !deleteTableMode && !moveTableMode && (
-        <button
-          className="edit-table-button"
-          onClick={e => { e.stopPropagation(); onEdit(); }}
-        >
+        <button className="edit-table-button" onClick={e=>{ e.stopPropagation(); onEdit(); }}>
           編輯
         </button>
       )}

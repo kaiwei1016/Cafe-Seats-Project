@@ -569,3 +569,34 @@ body {
   line-height: 1;
   white-space: nowrap;
 }
+
+.table-preview-container {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+/* 等分線共用樣式 */
+.grid-line {
+  position: absolute;
+  pointer-events: none;
+  /* 單一像素虛線 */
+  border-color: rgba(0,0,0,0.1);
+  border-style: dashed;
+  border-width: 0.5px;
+}
+
+/* 垂直線：撐滿整張桌子高度 */
+.grid-line.vertical {
+  top: 0;
+  bottom: 0;
+  width: 0;
+}
+
+/* 水平線：撐滿整張桌子寬度 */
+.grid-line.horizontal {
+  left: 0;
+  right: 0;
+  height: 0;
+}
+

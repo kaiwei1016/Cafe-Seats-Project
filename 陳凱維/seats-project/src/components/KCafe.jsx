@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Background from './Background';
 import Navbar from './Navbar';
+import TableForm from './TableForm';
 import './KCafe.css';
 
 // 檢查兩張桌子（各自有 left, top 百分比，width, height 乘數）是否重疊
@@ -284,154 +285,22 @@ const hasOverlapMove = moveTableMode && selectedToMoveTable != null
         />
       )}
 
-{/* 新增桌子表單 Modal */}
-{showAddForm && (
-  <div className="modal-backdrop">
-    <div className="modal">
-      <h3>新增桌子 {getNextTableIndex()}</h3>
-      <label>
-        桌號 (ID):
-        <input
-          value={newTableInput.id}
-          onChange={e => setNewTableInput(v => ({ ...v, id: e.target.value }))}
-          placeholder="留空則自動編號"
-        />
-      </label>
-
-      <label>
-        上限人數 (Capacity):
-        <input
-          type="number"
-          min={1}
-          value={newTableInput.capacity}
-          onChange={e => setNewTableInput(v => ({ ...v, capacity: +e.target.value }))}
-        />
-      </label>
-
-      {/* 這裡替換寬高欄位 */}
-      <label className="ratio-label">
-        桌子比例 (寬 × 高):
-        <div className="ratio-inputs">
-          <input
-            type="number"
-            min={1}
-            value={newTableInput.width}
-            onChange={e => {
-              const v = Math.max(1, +e.target.value);
-              setNewTableInput(curr => ({ ...curr, width: v }));
-            }}
-          />
-          <span className="ratio-mul">×</span>
-          <input
-            type="number"
-            min={1}
-            value={newTableInput.height}
-            onChange={e => {
-              const v = Math.max(1, +e.target.value);
-              setNewTableInput(curr => ({ ...curr, height: v }));
-            }}
-          />
-        </div>
-      </label>
-
-      <label>
-        描述:
-        <input
-          value={newTableInput.description}
-          onChange={e => setNewTableInput(v => ({ ...v, description: e.target.value }))}
-          placeholder="選填"
-        />
-      </label>
-
-      <div className="modal-actions">
-        <button
-          onClick={submitAddForm}
-          disabled={newTableInput.width < 1 || newTableInput.height < 1}
-        >
-          新增
-        </button>
-        <button onClick={cancelAddForm}>取消</button>
-      </div>
-    </div>
-  </div>
+{ (showAddForm || showEditForm) && (
+  <TableForm
+    mode={showAddForm ? 'add' : 'edit'}
+    tableInput={showAddForm ? newTableInput : editTableInput}
+    nextIndex={getNextTableIndex()}
+    onInputChange={(field, val) => {
+      if (showAddForm) setNewTableInput(v => ({ ...v, [field]: val }));
+      else setEditTableInput(v => ({ ...v, [field]: val }));
+    }}
+    onSubmit={showAddForm ? submitAddForm : saveEditForm}
+    onCancel={showAddForm ? cancelAddForm : cancelEditForm}
+    disabled={(showAddForm ? newTableInput : editTableInput).width < 1 ||
+              (showAddForm ? newTableInput : editTableInput).height < 1}
+  />
 )}
 
-
-{/* 編輯表單 Modal */}
-{showEditForm && (
-  <div className="modal-backdrop">
-    <div className="modal">
-      <h3>編輯桌子 {editTableInput.index}</h3>
-
-      <label>
-        桌號 (ID):
-        <input
-          type="text"
-          value={editTableInput.id}
-          onChange={e => setEditTableInput(v => ({ ...v, id: e.target.value }))}
-          placeholder="留空則保留原編號"
-        />
-      </label>
-
-      <label>
-        上限人數 (Capacity):
-        <input
-          type="number"
-          min={1}
-          value={editTableInput.capacity}
-          onChange={e => setEditTableInput(v => ({ ...v, capacity: +e.target.value }))}
-        />
-      </label>
-
-      {/* 新增這一段 */}
-      <label className="ratio-label">
-        桌子比例 (寬 × 高):
-        <div className="ratio-inputs">
-          <input
-            type="number"
-            min={1}
-            value={editTableInput.width}
-            onChange={e => {
-              const v = Math.max(1, +e.target.value);
-              setEditTableInput(curr => ({ ...curr, width: v }));
-            }}
-          />
-          <span className="ratio-mul">×</span>
-          <input
-            type="number"
-            min={1}
-            value={editTableInput.height}
-            onChange={e => {
-              const v = Math.max(1, +e.target.value);
-              setEditTableInput(curr => ({ ...curr, height: v }));
-            }}
-          />
-        </div>
-      </label>
-      {/* 到此 */}
-
-      <label>
-        描述 (Description):
-        <input
-          type="text"
-          value={editTableInput.description}
-          onChange={e => setEditTableInput(v => ({ ...v, description: e.target.value }))}
-          placeholder="選填"
-        />
-      </label>
-
-      <div className="modal-actions">
-        <button
-          onClick={saveEditForm}
-          disabled={editTableInput.width < 1 || editTableInput.height < 1}
-        >
-          儲存
-        </button>
-        <button onClick={cancelEditForm}>取消</button>
-      </div>
-    </div>
-  </div>
-)}
 
 
       {/* 標題文字 */}

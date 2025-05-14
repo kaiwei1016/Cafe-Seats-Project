@@ -36,6 +36,8 @@ const Background = ({
           top={tbl.top}
           capacity={tbl.capacity}
           occupied={tbl.occupied}
+          width={tbl.width}     // 新增
+          height={tbl.height}
           mode={mode}
           updateOccupied={delta => updateTableOccupied(tbl.index, delta)}
           onMouseDown={e => handleTableMouseDown(tbl.index, e)}
@@ -50,17 +52,29 @@ const Background = ({
 
       {/* pendingTable 的半透明預覽 */}
       {pendingTable && (
-        <div
-          className="table-container pending"
-          style={{ left: `${pendingTable.left}%`, top: `${pendingTable.top}%` }}
-          onMouseDown={e => handleTableMouseDown(pendingTable.index, e)}
-        >
-          <div className="table pending">
-            <div className="table-id">{pendingTable.id}</div>
-            <div className="table-info">0/{pendingTable.capacity}</div>
-          </div>
-        </div>
-      )}
+  <div
+    className="table-container pending"
+    style={{
+      left: `${pendingTable.left}%`,
+      top:  `${pendingTable.top}%`
+    }}
+    onMouseDown={e => handleTableMouseDown(pendingTable.index, e)}
+  >
+    <div
+      className="table pending"
+      style={{
+        width:  `${pendingTable.width  * 7}vmin`,
+        height: `${pendingTable.height * 7}vmin`
+      }}
+    >
+      <div className="table-id">{pendingTable.id}</div>
+      <div className="table-info">
+        0/{pendingTable.capacity}
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

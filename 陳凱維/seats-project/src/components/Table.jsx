@@ -8,6 +8,7 @@ const Table = ({
   top,
   capacity,
   occupied,
+  width = 1, height = 1,
   mode,
   updateOccupied,
   onEdit,
@@ -25,6 +26,8 @@ const Table = ({
   const isPartial = occupied > 0 && occupied < capacity;
   const isMoving  = moveTableMode && selectedToMoveTable === tableIndex;
   const isDeleting = deleteTableMode && selectedToDeleteTable === tableIndex;
+  const sizeW = width * 7;   // 單位 vmin
+  const sizeH = height * 7;
 
   // 點擊桌子本體的行為
   const handleClick = e => {
@@ -71,6 +74,10 @@ const Table = ({
            ${isPartial ? 'partial' : ''}`
           .trim().replace(/\s+/g,' ')
         }
+        style={{
+          width:  `${sizeW}vmin`,
+          height: `${sizeH}vmin`
+        }}
       >
         <div className="table-id">{id}</div>
         <div className="table-info">{occupied}/{capacity}</div>

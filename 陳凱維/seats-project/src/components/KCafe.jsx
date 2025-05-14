@@ -3,11 +3,53 @@ import Background from './Background';
 import Navbar from './Navbar';
 import './KCafe.css';
 
+// 檢查兩張桌子（各自有 left, top 百分比，width, height 乘數）是否重疊
+function rectsOverlap(a, b) {
+  const bg = document.querySelector('.background')?.getBoundingClientRect();
+  if (!bg) return false;
+
+  // 計算 1vmin 的 px 長度
+  const vminPx = Math.min(window.innerWidth, window.innerHeight) / 100;
+
+  // 每張桌子的實際寬高（px），基底是 7vmin
+  const aW = (a.width  || 1) * 7 * vminPx;
+  const aH = (a.height || 1) * 7 * vminPx;
+  const bW = (b.width  || 1) * 7 * vminPx;
+  const bH = (b.height || 1) * 7 * vminPx;
+
+  // 中心點座標轉成左上角座標
+  const aX = bg.left + (a.left  / 100) * bg.width  - aW / 2;
+  const aY = bg.top  + (a.top   / 100) * bg.height - aH / 2;
+  const bX = bg.left + (b.left  / 100) * bg.width  - bW / 2;
+  const bY = bg.top  + (b.top   / 100) * bg.height - bH / 2;
+
+  // 標準 AABB 重疊檢查
+  return !(
+    aX + aW < bX ||   // A 在 B 左邊
+    bX + bW < aX ||   // B 在 A 左邊
+    aY + aH < bY ||   // A 在 B 上面
+    bY + bH < aY      // B 在 A 上面
+  );
+}
+
+
+
+// 給一組 tables，檢查陣列中是否有任兩桌重疊
+function anyOverlap(tables) {
+  for (let i = 0; i < tables.length; i++) {
+    for (let j = i+1; j < tables.length; j++) {
+      if (rectsOverlap(tables[i], tables[j])) return true;
+    }
+  }
+  return false;
+}
+
+
 // 初始桌子資料
 const initialTables = [
-  { index: 1, id: 'A', left: 20, top: 20, capacity: 4, occupied: 2, description: '' },
-  { index: 2, id: 'B', left: 50, top: 50, capacity: 6, occupied: 0, description: '' },
-  { index: 3, id: 'C', left: 80, top: 30, capacity: 2, occupied: 1, description: '' },
+  { index: 1, id: 'A', left: 20, top: 20, capacity: 4, occupied: 2, description: '', width: 1, height: 1 },
+  { index: 2, id: 'B', left: 50, top: 50, capacity: 6, occupied: 0, description: '', width: 1, height: 1 },
+  { index: 3, id: 'C', left: 80, top: 30, capacity: 2, occupied: 1, description: '', width: 1, height: 1 },
 ];
 
 const KCafe = ({ hideMenu = false }) => {
@@ -33,9 +75,24 @@ const KCafe = ({ hideMenu = false }) => {
   // 暫存新增/編輯的桌子資料
   const [pendingTable, setPendingTable] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newTableInput, setNewTableInput] = useState({ id: '', capacity: 4, description: '' });
+  // 在 useState 裡暫存「新增表單輸入」
+const [newTableInput, setNewTableInput] = useState({
+  id: '',
+  capacity: 4,
+  description: '',
+  width: 1,     // 新增
+  height: 1     // 新增
+});
   const [showEditForm, setShowEditForm] = useState(false);
-  const [editTableInput, setEditTableInput] = useState({ index: null, id: '', capacity: 4, description: '' });
+  // 在 useState 裡暫存「編輯表單輸入」
+const [editTableInput, setEditTableInput] = useState({
+  index: null,
+  id: '',
+  capacity: 4,
+  description: '',
+  width: 1,     // 新增
+  height: 1     // 新增
+});
 
   // 刪除 & 移動 模式
   const [deleteTableMode, setDeleteTableMode] = useState(false);
@@ -113,14 +170,34 @@ const KCafe = ({ hideMenu = false }) => {
   // --------- 新增桌子流程 ---------
   const openAddForm = () => {
     if (mode !== 'edit' || deleteTableMode || moveTableMode || pendingTable) return;
+      // 先算出下一個 index 及預設桌號
+  const idx       = getNextTableIndex();
+  const defaultId = String.fromCharCode(65 + ((idx - 1) % 26));
     setShowAddForm(true); setMenuOpen(false);
-    setNewTableInput({ id: '', capacity: 4, description: '' });
+    setNewTableInput({
+      id:          defaultId,
+      capacity:    4,
+      description: '',
+      width:       1,
+      height:      1
+    });
   };
   const cancelAddForm = () => setShowAddForm(false);
   const submitAddForm = () => {
     const idx = getNextTableIndex();
     const id  = newTableInput.id.trim() || String.fromCharCode(65 + ((idx - 1) % 26));
-    setPendingTable({ index: idx, id, left: 50, top: 50, capacity: newTableInput.capacity, occupied: 0, description: newTableInput.description.trim() });
+    setPendingTable({
+      index: idx,
+      id,
+      left: 50,
+      top: 50,
+      capacity: newTableInput.capacity,
+      occupied: 0,
+      description: newTableInput.description.trim(),
+      width: newTableInput.width,
+      height: newTableInput.height
+    });
+    
     setShowAddForm(false);
   };
   const cancelAddTable = () => setPendingTable(null);
@@ -128,7 +205,21 @@ const KCafe = ({ hideMenu = false }) => {
 
   // --------- 刪除桌子流程 ---------
   const startDeleteTableMode = () => { if (mode !== 'edit') return; setDeleteTableMode(true); setSelectedToDeleteTable(null); };
-  const confirmDeleteTable = () => { if (selectedToDeleteTable == null) return; setTables(tables.filter(t => t.index !== selectedToDeleteTable)); setDeleteTableMode(false); setSelectedToDeleteTable(null); };
+  // ---------- 刪除桌子流程 ----------
+const confirmDeleteTable = () => {
+  if (selectedToDeleteTable == null) return;
+
+  // 1. 先把該桌的 storage 清掉
+  localStorage.removeItem(`kcafe_table_${selectedToDeleteTable}`);
+
+  // 2. 再更新 state，剩下的 tables 會在 useEffect 裡重新存入
+  setTables(prev => prev.filter(t => t.index !== selectedToDeleteTable));
+
+  // 3. 回復一般模式
+  setDeleteTableMode(false);
+  setSelectedToDeleteTable(null);
+};
+
   const cancelDeleteTableMode = () => { setDeleteTableMode(false); setSelectedToDeleteTable(null); };
 
   // --------- 移動桌子流程 ---------
@@ -140,14 +231,44 @@ const KCafe = ({ hideMenu = false }) => {
   const openEditForm = idx => {
     const t = tables.find(t => t.index === idx);
     if (!t) return;
-    setEditTableInput({ index: t.index, id: t.id, capacity: t.capacity, description: t.description });
+    setEditTableInput({
+      index:       t.index,
+      id:          t.id,
+      capacity:    t.capacity,
+      description: t.description,
+      width:       t.width,    // ← 加這兩行
+      height:      t.height
+    });
     setShowEditForm(true);
   };
   const cancelEditForm = () => setShowEditForm(false);
   const saveEditForm = () => {
-    setTables(tables.map(t => t.index !== editTableInput.index ? t : { ...t, id: editTableInput.id.trim() || t.id, capacity: editTableInput.capacity, description: editTableInput.description.trim() }));
+    setTables(tables.map(t =>
+      t.index !== editTableInput.index
+        ? t
+        : {
+            ...t,
+            id: editTableInput.id.trim() || t.id,
+            capacity: editTableInput.capacity,
+            description: editTableInput.description.trim(),
+            width: editTableInput.width,
+            height: editTableInput.height
+          }
+    ));
+    
     setShowEditForm(false);
   };
+
+  // 新增時：把 pendingTable 與現有 tables 併成一份，再檢查
+const hasOverlapAdd = pendingTable
+? tables.some(t => rectsOverlap(t, pendingTable))
+: false;
+
+// 移動時：把 selectedToMoveTable 那張取出來位置已改，然後檢查所有桌
+const hasOverlapMove = moveTableMode && selectedToMoveTable != null
+? anyOverlap(tables)
+: false;
+
 
   return (
     <div className="kcafe-container" onMouseMove={handleTableMouseMove} onMouseUp={handleTableMouseUp}>
@@ -159,38 +280,163 @@ const KCafe = ({ hideMenu = false }) => {
           addTable={openAddForm} pendingTable={pendingTable} cancelAddTable={cancelAddTable} confirmAddTable={confirmAddTable}
           startDeleteTableMode={startDeleteTableMode} deleteTableMode={deleteTableMode} selectedToDeleteTable={selectedToDeleteTable} confirmDeleteTable={confirmDeleteTable} cancelDeleteTableMode={cancelDeleteTableMode}
           startMoveTableMode={startMoveTableMode} moveTableMode={moveTableMode} selectedToMoveTable={selectedToMoveTable} confirmMoveTable={confirmMoveTable} cancelMoveTableMode={cancelMoveTableMode}
+          hasOverlapAdd={hasOverlapAdd} hasOverlapMove={hasOverlapMove}
         />
       )}
 
-      {/* 新增表單 Modal */}
-      {showAddForm && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h3>新增桌子 {getNextTableIndex()}</h3>
-            <label>桌號 (ID):<input value={newTableInput.id} onChange={e => setNewTableInput(v => ({ ...v, id: e.target.value }))} placeholder="留空則自動編號"/></label>
-            <label>上限人數:<input type="number" min={1} value={newTableInput.capacity} onChange={e => setNewTableInput(v => ({ ...v, capacity: +e.target.value }))}/></label>
-            <label>描述:<input value={newTableInput.description} onChange={e => setNewTableInput(v => ({ ...v, description: e.target.value }))} placeholder="選填"/></label>
-            <div className="modal-actions"><button onClick={submitAddForm}>新增</button><button onClick={cancelAddForm}>取消</button></div>
-          </div>
-        </div>
-      )}
+{/* 新增桌子表單 Modal */}
+{showAddForm && (
+  <div className="modal-backdrop">
+    <div className="modal">
+      <h3>新增桌子 {getNextTableIndex()}</h3>
+      <label>
+        桌號 (ID):
+        <input
+          value={newTableInput.id}
+          onChange={e => setNewTableInput(v => ({ ...v, id: e.target.value }))}
+          placeholder="留空則自動編號"
+        />
+      </label>
 
-      {/* 編輯表單 Modal */}
-      {showEditForm && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h3>編輯桌子 {editTableInput.index}</h3>
-            <label>桌號 (ID):<input value={editTableInput.id} onChange={e => setEditTableInput(v => ({ ...v, id: e.target.value }))} placeholder="留空保留原編號"/></label>
-            <label>上限人數:<input type="number" min={1} value={editTableInput.capacity} onChange={e => setEditTableInput(v => ({ ...v, capacity: +e.target.value }))}/></label>
-            <label>描述:<input value={editTableInput.description} onChange={e => setEditTableInput(v => ({ ...v, description: e.target.value }))} placeholder="選填"/></label>
-            <div className="modal-actions"><button onClick={saveEditForm}>儲存</button><button onClick={cancelEditForm}>取消</button></div>
-          </div>
-        </div>
-      )}
+      <label>
+        上限人數 (Capacity):
+        <input
+          type="number"
+          min={1}
+          value={newTableInput.capacity}
+          onChange={e => setNewTableInput(v => ({ ...v, capacity: +e.target.value }))}
+        />
+      </label>
 
-      {/* 標題與統計 */}
+      {/* 這裡替換寬高欄位 */}
+      <label className="ratio-label">
+        桌子比例 (寬 × 高):
+        <div className="ratio-inputs">
+          <input
+            type="number"
+            min={1}
+            value={newTableInput.width}
+            onChange={e => {
+              const v = Math.max(1, +e.target.value);
+              setNewTableInput(curr => ({ ...curr, width: v }));
+            }}
+          />
+          <span className="ratio-mul">×</span>
+          <input
+            type="number"
+            min={1}
+            value={newTableInput.height}
+            onChange={e => {
+              const v = Math.max(1, +e.target.value);
+              setNewTableInput(curr => ({ ...curr, height: v }));
+            }}
+          />
+        </div>
+      </label>
+
+      <label>
+        描述:
+        <input
+          value={newTableInput.description}
+          onChange={e => setNewTableInput(v => ({ ...v, description: e.target.value }))}
+          placeholder="選填"
+        />
+      </label>
+
+      <div className="modal-actions">
+        <button
+          onClick={submitAddForm}
+          disabled={newTableInput.width < 1 || newTableInput.height < 1}
+        >
+          新增
+        </button>
+        <button onClick={cancelAddForm}>取消</button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+{/* 編輯表單 Modal */}
+{showEditForm && (
+  <div className="modal-backdrop">
+    <div className="modal">
+      <h3>編輯桌子 {editTableInput.index}</h3>
+
+      <label>
+        桌號 (ID):
+        <input
+          type="text"
+          value={editTableInput.id}
+          onChange={e => setEditTableInput(v => ({ ...v, id: e.target.value }))}
+          placeholder="留空則保留原編號"
+        />
+      </label>
+
+      <label>
+        上限人數 (Capacity):
+        <input
+          type="number"
+          min={1}
+          value={editTableInput.capacity}
+          onChange={e => setEditTableInput(v => ({ ...v, capacity: +e.target.value }))}
+        />
+      </label>
+
+      {/* 新增這一段 */}
+      <label className="ratio-label">
+        桌子比例 (寬 × 高):
+        <div className="ratio-inputs">
+          <input
+            type="number"
+            min={1}
+            value={editTableInput.width}
+            onChange={e => {
+              const v = Math.max(1, +e.target.value);
+              setEditTableInput(curr => ({ ...curr, width: v }));
+            }}
+          />
+          <span className="ratio-mul">×</span>
+          <input
+            type="number"
+            min={1}
+            value={editTableInput.height}
+            onChange={e => {
+              const v = Math.max(1, +e.target.value);
+              setEditTableInput(curr => ({ ...curr, height: v }));
+            }}
+          />
+        </div>
+      </label>
+      {/* 到此 */}
+
+      <label>
+        描述 (Description):
+        <input
+          type="text"
+          value={editTableInput.description}
+          onChange={e => setEditTableInput(v => ({ ...v, description: e.target.value }))}
+          placeholder="選填"
+        />
+      </label>
+
+      <div className="modal-actions">
+        <button
+          onClick={saveEditForm}
+          disabled={editTableInput.width < 1 || editTableInput.height < 1}
+        >
+          儲存
+        </button>
+        <button onClick={cancelEditForm}>取消</button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+      {/* 標題文字 */}
       <h1>Welcome to KCafe!</h1>
-      <h2>現在時間：{currentTime.toLocaleString()}<br/>目前桌子：<span className="remaining">{totalOccupied}</span>/{totalCapacity}</h2>
+      <h2>現在時間：{currentTime.toLocaleString()}<br/>目前座位：<span className="remaining">{totalOccupied}</span>/{totalCapacity}</h2>
 
       {/* 背景與桌子 */}
       <Background
@@ -205,6 +451,7 @@ const KCafe = ({ hideMenu = false }) => {
         onEditTable={openEditForm}
         moveTableMode={moveTableMode}
         selectedToMoveTable={selectedToMoveTable}
+        draggingTable={draggingTable}
       />
     </div>
   );

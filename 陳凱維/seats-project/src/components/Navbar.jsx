@@ -3,25 +3,13 @@ import './KCafe.css';
 
 // Navbar: 頂部導覽列，包含模式切換、桌子操作按鈕、QR Code 生成選單
 const Navbar = ({
-  mode,
-  menuOpen,
-  setMenuOpen,
-  setMode,
-  tables,
-  addTable,
-  pendingTable,
-  cancelAddTable,
-  confirmAddTable,
-  startDeleteTableMode,
-  deleteTableMode,
-  selectedToDeleteTable,
-  confirmDeleteTable,
-  cancelDeleteTableMode,
-  startMoveTableMode,
-  moveTableMode,
-  selectedToMoveTable,
-  confirmMoveTable,
-  cancelMoveTableMode,
+  mode, menuOpen, setMenuOpen, setMode, tables,
+  addTable, pendingTable, cancelAddTable, confirmAddTable,
+  startDeleteTableMode, deleteTableMode, selectedToDeleteTable,
+  confirmDeleteTable, cancelDeleteTableMode,
+  startMoveTableMode, moveTableMode,selectedToMoveTable,
+  confirmMoveTable,cancelMoveTableMode,
+  hasOverlapAdd, hasOverlapMove
 }) => {
   const [showQRCodeOptions, setShowQRCodeOptions] = useState(false);
   const [selectedTableForQR, setSelectedTableForQR] = useState('');
@@ -67,25 +55,51 @@ const Navbar = ({
       {mode === 'edit' && (
         pendingTable ? (
           <>
-            <button onClick={confirmAddTable}>確認新增</button>
+            <button
+              onClick={confirmAddTable}
+              disabled={hasOverlapAdd}
+              style={{ color: hasOverlapAdd ? 'red' : undefined }}
+            >
+              {hasOverlapAdd ? '桌子重疊' : '確認新增'}
+            </button>
             <button onClick={cancelAddTable}>取消新增</button>
           </>
         ) : moveTableMode ? (
           <>
-            <button onClick={confirmMoveTable} disabled={selectedToMoveTable == null}>確認移動</button>
-            <button onClick={cancelMoveTableMode}>取消移動</button>
-          </>
+      <button
+        onClick={confirmMoveTable}
+        disabled={selectedToMoveTable == null || hasOverlapMove}
+        style={{ color: hasOverlapMove ? 'red' : undefined }}
+      >
+        {hasOverlapMove ? '桌子重疊' : '確認移動'}
+      </button>
+      <button onClick={cancelMoveTableMode}>取消移動</button>
+    </>
         ) : deleteTableMode ? (
           <>
             <button onClick={confirmDeleteTable} disabled={selectedToDeleteTable == null}>確認刪除</button>
             <button onClick={cancelDeleteTableMode}>取消刪除</button>
           </>
         ) : (
-          <>
-            <button onClick={addTable}>新增桌子</button>
-            <button onClick={startDeleteTableMode}>刪除桌子</button>
-            <button onClick={startMoveTableMode}>移動桌子</button>
-          </>
+<>
+  <button onClick={addTable}>新增桌子</button>
+  <button
+    onClick={() => {
+      startDeleteTableMode();
+      setMenuOpen(false);
+    }}
+  >
+    刪除桌子
+  </button>
+  <button
+    onClick={() => {
+      startMoveTableMode();
+      setMenuOpen(false);
+    }}
+  >
+    移動桌子
+  </button>
+</>
         )
       )}
 
@@ -118,7 +132,7 @@ const Navbar = ({
 
       {/* 觀察模式：顧客版鏈結 */}
       {mode === 'view' && (
-        <button className="go-guest-button" onClick={() => window.open('/guest', '_blank')}>查看顧客版</button>
+        <button className="go-guest-button" onClick={() => window.open('/guest', '_blank')}>查看顧客視角</button>
       )}
     </nav>
   );

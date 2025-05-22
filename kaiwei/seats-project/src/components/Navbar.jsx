@@ -1,3 +1,4 @@
+// src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/Navbar.css';
 
@@ -30,6 +31,41 @@ export default function Navbar({
   const isTableAction = deleteTableMode || moveTableMode;
   const sortedTables = [...tables].sort((a, b) => a.index - b.index);
 
+  // 匯出 CSV
+  const exportCSV = () => {
+    const header = [
+      'table_id','index','name','left','top', 'width','height', 'capacity','occupied',
+      'extraSeatLimit','tags','description','updateTime',"available", "floor"
+    ];
+    const FLOOR = '1F';
+
+    const rows = sortedTables.map(t => [
+      `${FLOOR}_${t.index}`,
+      t.index,
+      t.id,
+      t.left,
+      t.top,
+      t.width,
+      t.height,
+      t.capacity,
+      t.occupied,
+      t.extraSeatLimit,
+      Array.isArray(t.tags) ? `"${t.tags.join(',')}"` : `"${t.tags}"`,
+      `"${(t.description||'').replace(/"/g,'""')}"`,
+      t.updateTime || '',
+      true,
+      FLOOR
+    ].join(','));
+    const csv = [header.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'table_data.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="navbar-wrapper">
       {/* ─────── 上層 TopBar ─────── */}
@@ -54,7 +90,7 @@ export default function Navbar({
               onClick={() => setMode('view')}
             >觀察模式</button>
 
-            {/* 漢堡選單容器 (只剩 QR) */}
+            {/* 漢堡選單容器 (只剩 QR & 匯出) */}
             <div className="menu-container" ref={popupRef}>
               <button
                 className="menu-button"
@@ -67,9 +103,12 @@ export default function Navbar({
 
               {menuOpen && (
                 <div className="menu-dropdown">
-                  <button
-                    onClick={() => setShowQRCodeOptions(v => !v)}
-                  >取得 QR code</button>
+                  <button onClick={() => setShowQRCodeOptions(v => !v)}>
+                    取得 QR code
+                  </button>
+                  <button onClick={exportCSV}>
+                    匯出桌位資料
+                  </button>
 
                   {showQRCodeOptions && (
                     <div className="qr-options">
@@ -140,13 +179,16 @@ export default function Navbar({
             ) : (
               <>
                 <button onClick={addTable}>新增桌子</button>
-                <button onClick={() => { startDeleteTableMode(); setMenuOpen(false); }}>刪除桌子</button>
-                <button onClick={() => { startMoveTableMode(); setMenuOpen(false); }}>移動桌子</button>
+                <button onClick={() => { startDeleteTableMode(); setMenuOpen(false); }}>
+                  刪除桌子
+                </button>
+                <button onClick={() => { startMoveTableMode(); setMenuOpen(false); }}>
+                  移動桌子
+                </button>
                 <button onClick={openBgForm}>背景圖片</button>
               </>
             )
           )}
-
 
           {/* 觀察模式顧客版按鈕 */}
           {mode === 'view' && (

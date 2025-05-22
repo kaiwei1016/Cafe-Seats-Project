@@ -6,7 +6,7 @@ const Background = ({
   tables,
   pendingTable,
   updateTableOccupied,
-  mode,
+  mode, bgOffset, 
   handleTableMouseDown,
   deleteTableMode,
   selectedToDeleteTable,
@@ -29,7 +29,8 @@ const Background = ({
         alt="KCafe Background"
         className="bg-image"
         style={{
-          transform: `rotate(${-rotateCount * 90}deg)`
+          transform: `rotate(${-rotateCount * 90}deg)`,
+          objectPosition: `${bgOffset.x}% ${bgOffset.y}%`
         }}        
         draggable={false}
         onDragStart={e => e.preventDefault()}

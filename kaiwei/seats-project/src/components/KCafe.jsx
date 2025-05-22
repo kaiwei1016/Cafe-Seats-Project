@@ -1,6 +1,7 @@
 // src/components/KCafe.jsx
 import React, { useState, useEffect } from 'react';
 import Background from './Background';
+import BackgroundForm from './BackgroundForm';
 import Navbar     from './Navbar';
 import TableForm  from './TableForm';
 import '../styles/Global.css';
@@ -60,6 +61,20 @@ const INITIAL_TABLES = [
 // KCafe Component
 // ─────────────────────────────────────────────────────────────────────────────
 const KCafe = ({ hideMenu = false }) => {
+  
+  const [showBgForm, setShowBgForm] = useState(false);
+  const [bgOffset,   setBgOffset]   = useState({ x:50, y:50 });
+  
+  const openBgForm   = () => setShowBgForm(true);
+  const cancelBgForm = () => setShowBgForm(false);
+  const saveBgForm   = crop => {
+    // TODO: 根据 crop.x/y/w/h 调整实际 background 的 CSS 
+    // （例如通过 object-position / clip-path 等）
+    setShowBgForm(false);
+  };
+  
+
+
   // ----- State Hooks -----
   // Tables loaded from localStorage or default
   const [tables, setTables] = useState(() => {
@@ -294,6 +309,7 @@ const KCafe = ({ hideMenu = false }) => {
       <Navbar
         hideMenu={hideMenu}   // ← new
         mode={mode}
+        openBgForm={openBgForm}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         setMode={setMode}
@@ -339,6 +355,7 @@ const KCafe = ({ hideMenu = false }) => {
         pendingTable={pendingTable}
         updateTableOccupied={updateTableOccupied}
         mode={mode}
+        bgOffset={bgOffset}
         handleRotate={rotateLayout}
         rotateCount={rotateCount}
         handleTableMouseDown={handleTableMouseDown}
@@ -350,6 +367,15 @@ const KCafe = ({ hideMenu = false }) => {
         selectedToMoveTable={selectedToMoveTable}
         draggingTable={draggingTable}
       />
+
+      {showBgForm && (
+        <BackgroundForm
+          bgOffset={bgOffset}
+          onSave={saveBgForm}
+          onCancel={cancelBgForm}
+        />
+      )}
+
 
       {/* Header */}
       <h2>

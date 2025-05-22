@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/Navbar.css';
 
 export default function Navbar({
-  hideMenu,
+  hideMenu, openBgForm,
   mode, menuOpen, setMenuOpen, setMode, tables,
   addTable, pendingTable, cancelAddTable, confirmAddTable,
   startDeleteTableMode, deleteTableMode, selectedToDeleteTable,
@@ -142,6 +142,7 @@ export default function Navbar({
                 <button onClick={addTable}>新增桌子</button>
                 <button onClick={() => { startDeleteTableMode(); setMenuOpen(false); }}>刪除桌子</button>
                 <button onClick={() => { startMoveTableMode(); setMenuOpen(false); }}>移動桌子</button>
+                <button onClick={openBgForm}>背景圖片</button>
               </>
             )
           )}

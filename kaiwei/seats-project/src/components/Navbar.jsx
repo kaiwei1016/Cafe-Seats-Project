@@ -103,13 +103,12 @@ export default function Navbar({
 
               {menuOpen && (
                 <div className="menu-dropdown">
-                  <button onClick={() => setShowQRCodeOptions(v => !v)}>
-                    取得 QR code
-                  </button>
                   <button onClick={exportCSV}>
                     匯出桌位資料
                   </button>
-
+                  <button onClick={() => setShowQRCodeOptions(v => !v)}>
+                    取得 QR code
+                  </button>
                   {showQRCodeOptions && (
                     <div className="qr-options">
                       <select

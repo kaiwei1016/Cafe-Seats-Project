@@ -14,7 +14,7 @@ import '../styles/TableForm.css';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Grid unit (percent); must match CSS (8% per cell or adjust accordingly)
-const GRID_UNIT_PCT = 4;  
+const GRID_UNIT_PCT = 2;  
 
 /**
  * Check if two tables overlap on the snap-to grid.
@@ -202,7 +202,7 @@ const KCafe = ({ hideMenu = false }) => {
     const defaultId = String.fromCharCode(65 + ((idx - 1) % 26));
     setShowAddForm(true);
     setMenuOpen(false);
-    setNewTableInput({ id: defaultId, capacity:4, description:'', width:1, height:1, extraSeatLimit:0, tags:[] });
+    setNewTableInput({ id: defaultId, capacity:4, description:'', width:2, height:2, extraSeatLimit:0, tags:[] });
   };
   const cancelAddForm = () => setShowAddForm(false);
   const submitAddForm = () => {

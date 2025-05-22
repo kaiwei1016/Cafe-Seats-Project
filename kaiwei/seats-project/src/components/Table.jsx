@@ -29,7 +29,7 @@ const Table = ({
   const containerRef = useRef(null);
 
   // Grid unit in % — each unit is 8% of the background
-  const UNIT_PCT = 8;
+  const UNIT_PCT = 4;
 
   // Derived flags
   const maxOccupancy = capacity + extraSeatLimit;

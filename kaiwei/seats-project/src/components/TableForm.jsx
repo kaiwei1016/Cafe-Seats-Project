@@ -61,8 +61,8 @@ export default function TableForm({
       <div
         className="table preview"
         style={{
-          width:  `${tableInput.width  * 8}vmin`,
-          height: `${tableInput.height * 8}vmin`,
+          width:  `${tableInput.width  * 6}vmin`,
+          height: `${tableInput.height * 6}vmin`,
           position: 'relative'
         }}        
       >

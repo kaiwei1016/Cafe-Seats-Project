@@ -70,7 +70,7 @@ const Background = ({
       left:   `${pendingTable.left}%`,
       top:    `${pendingTable.top}%`,
       width:  `${pendingTable.width  * 4}%`,  // 半角 % 喔
-      height: `${pendingTable.height * 4}%`
+      height: `${pendingTable.height * 6}%`
     }}
     onMouseDown={e => handleTableMouseDown(pendingTable.index, e)}
   >

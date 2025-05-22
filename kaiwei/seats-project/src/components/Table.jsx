@@ -80,7 +80,7 @@ const Table = ({
     left:   `${left}%`,
     top:    `${top}%`,
     width:  `${width * UNIT_PCT}%`,
-    height: `${height * UNIT_PCT}%`
+    height: `${height * UNIT_PCT* 6.25/4}%`
   };
 
   const tableStyle = {

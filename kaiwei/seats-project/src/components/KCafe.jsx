@@ -14,7 +14,8 @@ import '../styles/TableForm.css';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Grid unit (percent); must match CSS (8% per cell or adjust accordingly)
-const GRID_UNIT_PCT = 2;  
+const GRID_UNIT_X = 2;
+const GRID_UNIT_Y   = 3.125;
 
 /**
  * Check if two tables overlap on the snap-to grid.
@@ -24,10 +25,10 @@ function rectsOverlap(a, b) {
   const dx = Math.abs(a.left - b.left);
   const dy = Math.abs(a.top  - b.top);
 
-  const aHalfW = a.width  * GRID_UNIT_PCT;
-  const aHalfH = a.height * GRID_UNIT_PCT;
-  const bHalfW = b.width  * GRID_UNIT_PCT;
-  const bHalfH = b.height * GRID_UNIT_PCT;
+  const aHalfW = a.width  * GRID_UNIT_X;
+  const aHalfH = a.height * GRID_UNIT_Y;
+  const bHalfW = b.width  * GRID_UNIT_X;
+  const bHalfH = b.height * GRID_UNIT_Y;
 
   // If gap on either axis ≥ sum of half-sizes, no overlap
   if (dx >= aHalfW + bHalfW || dy >= aHalfH + bHalfH) {
@@ -171,8 +172,8 @@ const KCafe = ({ hideMenu = false }) => {
     const bg = document.querySelector('.background').getBoundingClientRect();
     const rawX = ((e.clientX - bg.left - offset.x) / bg.width)  * 100;
     const rawY = ((e.clientY - bg.top  - offset.y) / bg.height) * 100;
-    const snapX = Math.round(rawX / GRID_UNIT_PCT) * GRID_UNIT_PCT;
-    const snapY = Math.round(rawY / GRID_UNIT_PCT) * GRID_UNIT_PCT;
+    const snapX = Math.round(rawX / GRID_UNIT_X) * GRID_UNIT_X;
+    const snapY = Math.round(rawY / GRID_UNIT_Y) * GRID_UNIT_Y;
     const clamped = pct => Math.max(0, Math.min(100, pct));
 
     const isPend = pendingTable?.index === draggingTable;
@@ -202,7 +203,7 @@ const KCafe = ({ hideMenu = false }) => {
     const defaultId = String.fromCharCode(65 + ((idx - 1) % 26));
     setShowAddForm(true);
     setMenuOpen(false);
-    setNewTableInput({ id: defaultId, capacity:4, description:'', width:2, height:2, extraSeatLimit:0, tags:[] });
+    setNewTableInput({ id: defaultId, capacity:4, description:'', width:1, height:1, extraSeatLimit:0, tags:[] });
   };
   const cancelAddForm = () => setShowAddForm(false);
   const submitAddForm = () => {
@@ -332,13 +333,6 @@ const KCafe = ({ hideMenu = false }) => {
         />
       )}
 
-      {/* Header */}
-      <h2>
-        現在時間：{currentTime.toLocaleString()}
-        <br />
-        目前座位：<span className="remaining">{totalOccupied}</span>/{totalCapacity}
-      </h2>
-
       {/* Background + Tables */}
       <Background
         tables={tables}
@@ -356,7 +350,18 @@ const KCafe = ({ hideMenu = false }) => {
         selectedToMoveTable={selectedToMoveTable}
         draggingTable={draggingTable}
       />
+
+      {/* Header */}
+      <h2>
+        現在時間：{currentTime.toLocaleString()}
+        <br />
+        目前座位：<span className="remaining">{totalOccupied}</span>/{totalCapacity}
+      </h2>
+
     </div>
+
+    
+
   );
 };
 

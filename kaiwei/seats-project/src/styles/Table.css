@@ -139,4 +139,21 @@
   .table.partial {
     animation: partial-glow 2s infinite ease-in-out alternate;
   }
+
+  /* override glow when selected-delete */
+.table-container.selected-delete .table,
+.table-container.selected-delete .table.full,
+.table-container.selected-delete .table.partial {
+  animation: none !important;          /* 關閉原本的散光動畫 */
+  box-shadow: 0 0 0.4vmin 0.4vmin rgba(255,0,0,0.8) !important; /* 紅框 */
+}
+
+/* override glow when selected-move */
+.table-container.selected-move .table,
+.table-container.selected-move .table.full,
+.table-container.selected-move .table.partial {
+  animation: none !important;          /* 關閉原本的散光動畫 */
+  box-shadow: 0 0 0.4vmin 0.4vmin rgba(0,0,255,0.8) !important; /* 藍框 */
+}
+
   

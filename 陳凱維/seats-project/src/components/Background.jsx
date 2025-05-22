@@ -1,6 +1,6 @@
 import React from 'react';
 import Table from './Table';
-import './KCafe.css';
+import '../styles/Background.css';
 
 const Background = ({
   tables,
@@ -13,15 +13,24 @@ const Background = ({
   onSelectDeleteTable,
   onEditTable,
   moveTableMode,
-  selectedToMoveTable
+  selectedToMoveTable,
+  handleRotate,
+  rotateCount
 }) => {
   return (
-    <div className="background">
-      {/* 背景圖片 */}
+    <div className={`background ${mode === 'edit' ? 'show-grid' : ''}`}>
+      {/* 旋轉按鈕 */}
+      <button className="rotate-button" onClick={handleRotate}>
+        ⟳
+      </button>
+      {/* 背景圖：純粹視覺旋轉 */}
       <img
         src="/img/KCafe.jpg"
         alt="KCafe Background"
         className="bg-image"
+        style={{
+          transform: `rotate(${-rotateCount * 90}deg)`
+        }}        
         draggable={false}
         onDragStart={e => e.preventDefault()}
       />
@@ -36,8 +45,11 @@ const Background = ({
           top={tbl.top}
           capacity={tbl.capacity}
           occupied={tbl.occupied}
-          width={tbl.width}     // 新增
+          width={tbl.width}
           height={tbl.height}
+          extraSeatLimit={tbl.extraSeatLimit}
+          updateTime={tbl.updateTime}
+          tags={tbl.tags}
           mode={mode}
           updateOccupied={delta => updateTableOccupied(tbl.index, delta)}
           onMouseDown={e => handleTableMouseDown(tbl.index, e)}
@@ -50,30 +62,25 @@ const Background = ({
         />
       ))}
 
-      {/* pendingTable 的半透明預覽 */}
-      {pendingTable && (
+{/* pendingTable 的半透明預覽 */}
+{pendingTable && (
   <div
     className="table-container pending"
     style={{
-      left: `${pendingTable.left}%`,
-      top:  `${pendingTable.top}%`
+      left:   `${pendingTable.left}%`,
+      top:    `${pendingTable.top}%`,
+      width:  `${pendingTable.width  * 8}%`,  // 半角 % 喔
+      height: `${pendingTable.height * 8}%`
     }}
     onMouseDown={e => handleTableMouseDown(pendingTable.index, e)}
   >
-    <div
-      className="table pending"
-      style={{
-        width:  `${pendingTable.width  * 7}vmin`,
-        height: `${pendingTable.height * 7}vmin`
-      }}
-    >
+    <div className="table pending" style={{ width: '100%', height: '100%' }}>
       <div className="table-id">{pendingTable.id}</div>
-      <div className="table-info">
-        0/{pendingTable.capacity}
-      </div>
+      <div className="table-info">0/{pendingTable.capacity}</div>
     </div>
   </div>
 )}
+
 
     </div>
   );

@@ -1,26 +1,17 @@
-import React from 'react';
+// TableForm.jsx
+import React, { useState } from 'react';
+import '../styles/TableForm.css';
 
-/**
- * TableForm 通用表單，用於新增或編輯桌子
- *
- * props:
- * - mode: 'add' 或 'edit'
- * - tableInput: { index?, id, capacity, description, width, height }
- * - nextIndex: number (僅對 mode==='add' 有效)
- * - onInputChange: (field: string, value: any) => void
- * - onSubmit: () => void
- * - onCancel: () => void
- * - disabled: boolean
- */
-const TableForm = ({
+export default function TableForm({
   mode,
   tableInput,
   nextIndex,
   onInputChange,
   onSubmit,
-  onCancel,
-  disabled
-}) => {
+  onCancel
+}) {
+  const [advanced, setAdvanced] = useState(false);
+
   const isAdd = mode === 'add';
   const title = isAdd
     ? `新增桌子 ${nextIndex}`
@@ -30,7 +21,12 @@ const TableForm = ({
     ? '留空則自動編號'
     : '留空則保留原編號';
 
-  // 用來產生 grid lines 的 helpers
+  // tags array ⇄ comma string
+  const tagsString = Array.isArray(tableInput.tags)
+    ? tableInput.tags.join(',')
+    : '';
+
+  // 預覽格線
   const verticalLines = [];
   for (let i = 1; i < tableInput.width; i++) {
     verticalLines.push(
@@ -52,80 +48,155 @@ const TableForm = ({
     );
   }
 
+  // 驗證
+  const validCapacity       = Number.isInteger(tableInput.capacity)       && tableInput.capacity >= 0;
+  const validWidth          = Number.isInteger(tableInput.width)          && tableInput.width >= 1;
+  const validHeight         = Number.isInteger(tableInput.height)         && tableInput.height >= 1;
+  const validExtraSeatLimit = Number.isInteger(tableInput.extraSeatLimit) && tableInput.extraSeatLimit >= 0;
+  const disabled = !(validCapacity && validWidth && validHeight && validExtraSeatLimit);
+
+  // 共用預覽元件
+  const Preview = () => (
+    <div className="table-preview-container">
+      <div
+        className="table preview"
+        style={{
+          width:  `${tableInput.width  * 8}vmin`,
+          height: `${tableInput.height * 8}vmin`,
+          position: 'relative'
+        }}        
+      >
+        {/* 網格線 */}
+        {verticalLines}
+        {horizontalLines}
+
+        {/* 內容 */}
+        <div className="table-id">{tableInput.id}</div>
+        <div className="table-info">
+          0/{tableInput.capacity}
+          {tableInput.extraSeatLimit > 0 && (
+            <span className="extra">(+{tableInput.extraSeatLimit})</span>
+          )}
+        </div>
+
+        {/* 標籤 */}
+        {Array.isArray(tableInput.tags) && tableInput.tags.length > 0 && (
+          <div className="table-tags">
+            {tableInput.tags.map(tag => (
+              <span key={tag} className="tag">{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="modal-backdrop">
-      <div className="modal">
+      <div className="modal table-form">
         <h3>{title}</h3>
 
-        <label>
-          桌號 (ID):
-          <input
-            type="text"
-            value={tableInput.id}
-            placeholder={idPlaceholder}
-            onChange={e => onInputChange('id', e.target.value)}
-          />
-        </label>
+        <div className="pages-container">
+          <div className={`pages${advanced ? ' advanced' : ''}`}>  
+            {/* 基本設定面板 */}
+            <div className="page basic-page">
+              <label>
+                桌號 (ID):
+                <input
+                  type="text"
+                  value={tableInput.id}
+                  placeholder={idPlaceholder}
+                  onChange={e => onInputChange('id', e.target.value)}
+                />
+              </label>
+              <label>
+                上限人數 (Capacity):
+                <input
+                  type="number" step={1} min={0}
+                  value={tableInput.capacity}
+                  onChange={e => {
+                    const v = Math.max(0, Math.floor(+e.target.value));
+                    onInputChange('capacity', isNaN(v) ? 0 : v);
+                  }}
+                />
+              </label>
+              <label className="ratio-label">
+                桌子比例 (寬 × 高):
+                <div className="ratio-inputs">
+                  <input
+                    type="number" step={1} min={1}
+                    value={tableInput.width}
+                    onChange={e => {
+                      const v = Math.max(1, Math.floor(+e.target.value));
+                      onInputChange('width', isNaN(v) ? 1 : v);
+                    }}
+                  />
+                  <span className="ratio-mul">×</span>
+                  <input
+                    type="number" step={1} min={1}
+                    value={tableInput.height}
+                    onChange={e => {
+                      const v = Math.max(1, Math.floor(+e.target.value));
+                      onInputChange('height', isNaN(v) ? 1 : v);
+                    }}
+                  />
+                </div>
+              </label>
 
-        <label>
-          上限人數 (Capacity):
-          <input
-            type="number"
-            min={1}
-            value={tableInput.capacity}
-            onChange={e => onInputChange('capacity', +e.target.value)}
-          />
-        </label>
+              {/* 基本設定預覽 */}
+              <label>預覽 (Preview):</label>
+              <Preview />
+            </div>
 
-        {/* 長寬比例 */}
-        <label className="ratio-label">
-          桌子比例 (寬 × 高):
-          <div className="ratio-inputs">
-            <input
-              type="number"
-              min={1}
-              value={tableInput.width}
-              onChange={e => onInputChange('width', Math.max(1, +e.target.value))}
-            />
-            <span className="ratio-mul">×</span>
-            <input
-              type="number"
-              min={1}
-              value={tableInput.height}
-              onChange={e => onInputChange('height', Math.max(1, +e.target.value))}
-            />
-          </div>
-        </label>
+            {/* 進階設定面板 */}
+            <div className="page advanced-page">
+              <label>
+                額外座位上限 (ExtraSeatLimit):
+                <input
+                  type="number" step={1} min={0}
+                  value={tableInput.extraSeatLimit ?? 0}
+                  placeholder="0"
+                  onChange={e => {
+                    const v = Math.max(0, Math.floor(+e.target.value));
+                    onInputChange('extraSeatLimit', isNaN(v) ? 0 : v);
+                  }}
+                />
+              </label>
+              <label>
+                標籤 (Tags, 用逗號分隔):
+                <input
+                  type="text"
+                  value={tagsString}
+                  placeholder="例如：插座,靠窗,安靜"
+                  onChange={e => {
+                    const arr = e.target.value.split(',').map(s => s.trim());
+                    onInputChange('tags', arr);
+                  }}
+                />
+              </label>
+              <label>
+                描述 (Description):
+                <input
+                  type="text"
+                  value={tableInput.description}
+                  placeholder="選填"
+                  onChange={e => onInputChange('description', e.target.value)}
+                />
+              </label>
 
-        {/* 預覽 */}
-        <div className="table-preview-container">
-          <div
-            className="table preview"
-            style={{
-              width:  `${tableInput.width  * 7}vmin`,
-              height: `${tableInput.height * 7}vmin`,
-              position: 'relative'
-            }}
-          >
-            {/* grid lines */}
-            {verticalLines}
-            {horizontalLines}
-
-            {/* 內容 */}
-            <div className="table-id">{tableInput.id}</div>
-            <div className="table-info">0/{tableInput.capacity}</div>
+              {/* 進階設定預覽也顯示標籤 */}
+              <label>預覽 (Preview):</label>
+              <Preview />
+            </div>
           </div>
         </div>
 
-        <label>
-          描述 (Description):
-          <input
-            type="text"
-            value={tableInput.description}
-            placeholder="選填"
-            onChange={e => onInputChange('description', e.target.value)}
-          />
-        </label>
+        <div
+          className="toggle-advanced"
+          onClick={() => setAdvanced(a => !a)}
+        >
+          {advanced ? '返回' : '進階設定'}
+        </div>
 
         <div className="modal-actions">
           <button onClick={onSubmit} disabled={disabled}>
@@ -136,6 +207,4 @@ const TableForm = ({
       </div>
     </div>
   );
-};
-
-export default TableForm;
+}

@@ -1,0 +1,168 @@
+/* ==========================================================================
+   Navbar Wrapper
+   ========================================================================== */
+   .navbar-wrapper {
+    width: 100%;
+  }
+  
+  /* ==========================================================================
+     TopBar (logo + title + mode buttons + hamburger)
+     ========================================================================== */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    z-index: 200;
+  }
+  
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .topbar-logo {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .topbar-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+  }
+  
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .topbar-right button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .topbar-right button.active {
+    background: #0077cc;
+    color: #fff;
+    border-color: #005fa3;
+  }
+  
+  .topbar-right button:hover:not(.active) {
+    background: #f0f0f0;
+  }
+  
+  /* keep hamburger styling consistent */
+  .topbar-right .menu-button {
+    font-size: 1.25rem;
+    background: none;
+    border: none;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  /* ==========================================================================
+     Hamburger dropdown attached to TopBar
+     ========================================================================== */
+  .menu-container {
+    position: relative;
+  }
+  
+  .menu-container .menu-dropdown {
+    position: absolute;
+    top: 100%;      /* 緊貼 TopBar 底部 */
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 250;
+  }
+
+  .menu-container .menu-dropdown > * {
+    white-space: nowrap;    /* 各項目內不要換行 */
+  }
+  
+  /* QR code options inside dropdown */
+  .menu-container .qr-options {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .menu-container .qr-options select {
+    padding: 0.3rem;
+    font-size: 0.9rem;
+  }
+  .menu-container .qr-options button {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.9rem;
+  }
+  .menu-container .qr-options button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  
+  /* ==========================================================================
+     BottomBar (original Navbar contents)
+     ========================================================================== */
+  .bottombar {
+    position: relative;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #f0f0f0;
+    font-size: 1rem;
+  }
+  
+  /* Mode display text */
+  .bottombar .mode-display {
+    font-size: 1rem;
+  }
+  
+  /* Shared button styles */
+  .bottombar button {
+    padding: 5px 15px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .bottombar button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  
+  /* Hide any dropdown that was previously under bottombar */
+  .bottombar .menu-dropdown {
+    display: none;
+  }
+  
+  /* Guest-view button */
+  .bottombar .go-guest-button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    background-color: #0077cc;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .bottombar .go-guest-button:hover {
+    background-color: #005fa3;
+  }
+  

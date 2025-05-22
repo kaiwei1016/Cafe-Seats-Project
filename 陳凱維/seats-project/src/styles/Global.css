@@ -1,0 +1,17 @@
+/* Global Styles */
+body {
+    font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+  }
+  .kcafe-container {
+    position: relative;
+    text-align: center;
+  }
+  .kcafe-container > h1 {
+    font-size: 2.5rem;
+  }
+  .kcafe-container > h2 {
+    font-size: 1.1rem;
+  }
+  .remaining {
+    color: red;
+  }

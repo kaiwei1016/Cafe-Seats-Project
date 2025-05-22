@@ -1,0 +1,166 @@
+/* TableForm.css */
+
+/* ensure padding/border are included in element’s width/height */
+*, *::before, *::after {
+    box-sizing: border-box;
+  }
+  
+  /* modal backdrop */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  /* modal window */
+  .modal {
+    width: 90%;
+    max-width: 400px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  
+  /* title */
+  .modal h3 {
+    margin-bottom: 12px;
+    font-size: 20px;
+    text-align: center;
+  }
+  
+  /* labels and inputs */
+  .modal label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-size: 14px;
+  }
+  .modal label input,
+  .modal label select {
+    width: 100%;
+    padding: 6px 8px;
+    margin-top: 4px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  /* action buttons */
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .modal-actions button {
+    padding: 6px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .modal-actions button:first-child {
+    background: #0077cc;
+    color: #fff;
+  }
+  .modal-actions button:first-child:hover {
+    background: #005fa3;
+  }
+  .modal-actions button:last-child {
+    background: #ccc;
+    color: #333;
+  }
+  .modal-actions button:last-child:hover {
+    background: #aaa;
+  }
+  
+  /* ratio inputs */
+  .ratio-label {
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+  .ratio-inputs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 4px;
+  }
+  .ratio-inputs input {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .ratio-mul {
+    white-space: nowrap;
+    font-size: 16px;
+  }
+  
+  /* preview grid & table */
+  .table-preview-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    border: 2px dashed rgb(4, 255, 4);
+  }
+  .grid-line {
+    position: absolute;
+    pointer-events: none;
+    border: 0.5px dashed rgba(0,0,0,0.1);
+  }
+  .grid-line.vertical {
+    top: 0;
+    bottom: 0;
+    width: 0;
+  }
+  .grid-line.horizontal {
+    left: 0;
+    right: 0;
+    height: 0;
+  }
+  
+  /* sliding panels */
+  .pages-container {
+    overflow: hidden;
+    width: 100%;
+  }
+  .pages {
+    display: flex;
+    width: 200%;
+    transform: translateX(0);
+    transition: transform 0.3s ease-in-out;
+  }
+  .pages.advanced {
+    transform: translateX(-50%);
+  }
+  .pages .page {
+    width: 50%;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: left;
+  }
+  .pages .page label {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  /* toggle link */
+  .toggle-advanced {
+    text-align: right;
+    color: #007BFF;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .toggle-advanced:hover {
+    color: #0056b3;
+    text-decoration: underline;
+  }
+  

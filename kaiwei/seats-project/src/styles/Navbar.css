@@ -49,6 +49,7 @@
     border: 1px solid transparent;
     border-radius: 4px;
     cursor: pointer;
+    white-space: nowrap;
   }
   
   .topbar-right button.active {

@@ -36,7 +36,7 @@ export default function Navbar({
       <div className="topbar">
         <div className="topbar-left">
           <img src="/img/logo.png" alt="logo" className="topbar-logo" />
-          <span className="topbar-title">Seat Viewer</span>
+          <span className="topbar-title">Seats Viewer</span>
         </div>
 
         {!hideMenu && (

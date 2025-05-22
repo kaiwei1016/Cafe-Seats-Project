@@ -1,10 +1,15 @@
 /* Global Styles */
 body {
     font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+    display: flex;
+    flex-direction: column;      /* 改成垂直排 */
+    align-items: center;         /* 只水平置中 */
+    justify-content: flex-start; /* 垂直靠顶 */
   }
   .kcafe-container {
     position: relative;
     text-align: center;
+    
   }
   .kcafe-container > h1 {
     font-size: 2.5rem;
@@ -15,3 +20,5 @@ body {
   .remaining {
     color: red;
   }
+
+  

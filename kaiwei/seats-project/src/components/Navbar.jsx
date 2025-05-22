@@ -133,7 +133,6 @@ export default function Navbar({
       </div>
 
       {/* ─────── 下層 BottomBar （舊 Navbar） ─────── */}
-      {!hideMenu && (
         <nav className="bottombar">
           {/* 目前模式顯示 */}
           <div className="mode-display">
@@ -196,7 +195,6 @@ export default function Navbar({
             </button>
           )}
         </nav>
-      )}
     </div>
   );
 }

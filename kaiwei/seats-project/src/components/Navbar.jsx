@@ -3,20 +3,34 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/Navbar.css';
 
 export default function Navbar({
-  hideMenu, openBgForm,
-  mode, menuOpen, setMenuOpen, setMode, tables,
-  addTable, pendingTable, cancelAddTable, confirmAddTable,
-  startDeleteTableMode, deleteTableMode, selectedToDeleteTable,
-  confirmDeleteTable, cancelDeleteTableMode,
-  startMoveTableMode, moveTableMode, selectedToMoveTable,
-  confirmMoveTable, cancelMoveTableMode,
-  hasOverlapAdd, hasOverlapMove
+  hideMenu,
+  openBgForm,
+  mode,
+  menuOpen,
+  setMenuOpen,
+  setMode,
+  tables,
+  addTable,
+  pendingTable,
+  cancelAddTable,
+  confirmAddTable,
+  startDeleteTableMode,
+  deleteTableMode,
+  selectedToDeleteTable,
+  confirmDeleteTable,
+  cancelDeleteTableMode,
+  startMoveTableMode,
+  moveTableMode,
+  selectedToMoveTable,
+  confirmMoveTable,
+  cancelMoveTableMode,
+  hasOverlapAdd,
+  hasOverlapMove
 }) {
   const [showQRCodeOptions, setShowQRCodeOptions] = useState(false);
   const [selectedTableForQR, setSelectedTableForQR] = useState('');
   const popupRef = useRef(null);
 
-  // 點擊外部關閉
   useEffect(() => {
     const onClickOutside = e => {
       if (popupRef.current && !popupRef.current.contains(e.target)) {
@@ -34,15 +48,28 @@ export default function Navbar({
   // 匯出 CSV
   const exportCSV = () => {
     const header = [
-      'table_id','index','name','left','top', 'width','height', 'capacity','occupied',
-      'extraSeatLimit','tags','description','updateTime',"available", "floor"
+      'table_id',
+      'index',
+      'name',
+      'left',
+      'top',
+      'width',
+      'height',
+      'capacity',
+      'occupied',
+      'extraSeatLimit',
+      'tags',
+      'description',
+      'updateTime',
+      'available',
+      'floor'
     ];
     const FLOOR = '1F';
 
     const rows = sortedTables.map(t => [
-      `${FLOOR}_${t.index}`,
+      t.table_id,
       t.index,
-      t.id,
+      `"${t.name.replace(/"/g, '""')}"`,
       t.left,
       t.top,
       t.width,
@@ -50,12 +77,13 @@ export default function Navbar({
       t.capacity,
       t.occupied,
       t.extraSeatLimit,
-      Array.isArray(t.tags) ? `"${t.tags.join(',')}"` : `"${t.tags}"`,
-      `"${(t.description||'').replace(/"/g,'""')}"`,
+      Array.isArray(t.tags) ? `"${t.tags.join(',').replace(/"/g, '""')}"` : '""',
+      `"${(t.description || '').replace(/"/g, '""')}"`,
       t.updateTime || '',
-      true,
-      FLOOR
+      t.available,
+      t.floor || FLOOR
     ].join(','));
+
     const csv = [header.join(','), ...rows].join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -68,7 +96,7 @@ export default function Navbar({
 
   return (
     <div className="navbar-wrapper">
-      {/* ─────── 上層 TopBar ─────── */}
+      {/* 上層 TopBar */}
       <div className="topbar">
         <div className="topbar-left">
           <img src="/img/logo.png" alt="logo" className="topbar-logo" />
@@ -80,17 +108,23 @@ export default function Navbar({
             <button
               className={mode === 'business' ? 'active' : ''}
               onClick={() => setMode('business')}
-            >營業模式</button>
+            >
+              營業模式
+            </button>
             <button
               className={mode === 'edit' ? 'active' : ''}
               onClick={() => setMode('edit')}
-            >編輯模式</button>
+            >
+              編輯模式
+            </button>
             <button
               className={mode === 'view' ? 'active' : ''}
               onClick={() => setMode('view')}
-            >觀察模式</button>
+            >
+              觀察模式
+            </button>
 
-            {/* 漢堡選單容器 (只剩 QR & 匯出) */}
+            {/* 漢堡選單：匯出 & QR */}
             <div className="menu-container" ref={popupRef}>
               <button
                 className="menu-button"
@@ -99,14 +133,16 @@ export default function Navbar({
                   setMenuOpen(v => !v);
                 }}
                 disabled={isTableAction}
-              >☰</button>
+              >
+                ☰
+              </button>
 
               {menuOpen && (
                 <div className="menu-dropdown">
-                  <button onClick={exportCSV}>
-                    匯出桌位資料
-                  </button>
-                  <button onClick={() => setShowQRCodeOptions(v => !v)}>
+                  <button onClick={exportCSV}>匯出桌位資料</button>
+                  <button
+                    onClick={() => setShowQRCodeOptions(v => !v)}
+                  >
                     取得 QR code
                   </button>
                   {showQRCodeOptions && (
@@ -117,12 +153,14 @@ export default function Navbar({
                       >
                         <option value="">選擇桌號</option>
                         {sortedTables.map(t => (
-                          <option key={t.index} value={t.id}>
-                            桌號 {t.id} (# {t.index})
+                          <option key={t.table_id} value={t.table_id}>
+                            桌號 {t.name} ({t.table_id})
                           </option>
                         ))}
                       </select>
-                      <button disabled={!selectedTableForQR}>下載</button>
+                      <button disabled={!selectedTableForQR}>
+                        下載
+                      </button>
                     </div>
                   )}
                 </div>
@@ -132,69 +170,82 @@ export default function Navbar({
         )}
       </div>
 
-      {/* ─────── 下層 BottomBar （舊 Navbar） ─────── */}
-        <nav className="bottombar">
-          {/* 目前模式顯示 */}
-          <div className="mode-display">
-            {mode === 'business'
-              ? '目前模式：營業模式'
-              : mode === 'edit'
-                ? ''
-                : ''}
-          </div>
+      {/* 下層 BottomBar */}
+      <nav className="bottombar">
+        <div className="mode-display">
+          {mode === 'business'
+            ? '目前模式：營業模式'
+            : mode === 'edit'
+            ? ''
+            : ''}
+        </div>
 
-          {/* 編輯模式操作按鈕 */}
-          {mode === 'edit' && (
-            pendingTable ? (
-              <>
-                <button
-                  onClick={confirmAddTable}
-                  disabled={hasOverlapAdd}
-                  style={{ color: hasOverlapAdd ? 'red' : undefined }}
-                >
-                  {hasOverlapAdd ? '桌子重疊' : '確認新增'}
-                </button>
-                <button onClick={cancelAddTable}>取消新增</button>
-              </>
-            ) : moveTableMode ? (
-              <>
-                <button
-                  onClick={confirmMoveTable}
-                  disabled={!selectedToMoveTable || hasOverlapMove}
-                  style={{ color: hasOverlapMove ? 'red' : undefined }}
-                >
-                  {hasOverlapMove ? '桌子重疊' : '確認移動'}
-                </button>
-                <button onClick={cancelMoveTableMode}>取消移動</button>
-              </>
-            ) : deleteTableMode ? (
-              <>
-                <button onClick={confirmDeleteTable} disabled={!selectedToDeleteTable}>
-                  確認刪除
-                </button>
-                <button onClick={cancelDeleteTableMode}>取消刪除</button>
-              </>
-            ) : (
-              <>
-                <button onClick={addTable}>新增桌子</button>
-                <button onClick={() => { startDeleteTableMode(); setMenuOpen(false); }}>
-                  刪除桌子
-                </button>
-                <button onClick={() => { startMoveTableMode(); setMenuOpen(false); }}>
-                  移動桌子
-                </button>
-                <button onClick={openBgForm}>背景圖片</button>
-              </>
-            )
-          )}
+        {mode === 'edit' && (
+          pendingTable ? (
+            <>
+              <button
+                onClick={confirmAddTable}
+                disabled={hasOverlapAdd}
+                style={{ color: hasOverlapAdd ? 'red' : undefined }}
+              >
+                {hasOverlapAdd ? '桌子重疊' : '確認新增'}
+              </button>
+              <button onClick={cancelAddTable}>取消新增</button>
+            </>
+          ) : moveTableMode ? (
+            <>
+              <button
+                onClick={confirmMoveTable}
+                disabled={!selectedToMoveTable || hasOverlapMove}
+                style={{ color: hasOverlapMove ? 'red' : undefined }}
+              >
+                {hasOverlapMove ? '桌子重疊' : '確認移動'}
+              </button>
+              <button onClick={cancelMoveTableMode}>取消移動</button>
+            </>
+          ) : deleteTableMode ? (
+            <>
+              <button
+                onClick={confirmDeleteTable}
+                disabled={!selectedToDeleteTable}
+              >
+                確認刪除
+              </button>
+              <button onClick={cancelDeleteTableMode}>取消刪除</button>
+            </>
+          ) : (
+            <>
+              <button onClick={addTable}>新增桌子</button>
+              <button
+                onClick={() => {
+                  startDeleteTableMode();
+                  setMenuOpen(false);
+                }}
+              >
+                刪除桌子
+              </button>
+              <button
+                onClick={() => {
+                  startMoveTableMode();
+                  setMenuOpen(false);
+                }}
+              >
+                移動桌子
+              </button>
+              <button onClick={openBgForm}>背景圖片</button>
+            </>
+          )
+        )}
 
-          {/* 觀察模式顧客版按鈕 */}
-          {mode === 'view' && (
-            <button className="go-guest-button" onClick={() => window.open('/guest', '_blank')}>
-              查看顧客視角
-            </button>
-          )}
-        </nav>
+        {mode === 'view' && (
+          <button
+            className="go-guest-button"
+            onClick={() => window.open('/guest', '_blank')}
+          >
+            查看顧客視角
+          </button>
+        )}
+      </nav>
     </div>
   );
 }

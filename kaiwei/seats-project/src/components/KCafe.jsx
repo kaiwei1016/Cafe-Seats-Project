@@ -52,9 +52,22 @@ function anyOverlap(tables) {
 
 // Initial default tables
 const INITIAL_TABLES = [
-  { index: 1, id: 'A', left: 20, top: 20, capacity: 4, occupied: 2, description: '', width: 1, height: 1, extraSeatLimit: 0, updateTime: null, tags: [] },
-  { index: 2, id: 'B', left: 50, top: 50, capacity: 6, occupied: 0, description: '', width: 1, height: 1, extraSeatLimit: 0, updateTime: null, tags: [] },
-  { index: 3, id: 'C', left: 80, top: 30, capacity: 2, occupied: 1, description: '', width: 1, height: 1, extraSeatLimit: 0, updateTime: null, tags: [] },
+  {
+    table_id: '1F_01',
+    floor: '1F',
+    index: 1,
+    name: 'A',
+    left: 20, top: 20,
+    width: 1, height: 1,
+    capacity: 4,
+    occupied: 2,
+    extraSeatLimit: 0,
+    tags: [],
+    description: '',
+    updateTime: null,
+    available: true
+  },
+  // ...
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,7 +104,7 @@ const KCafe = ({ hideMenu = false }) => {
   // Persist to localStorage on every change
   useEffect(() => {
     tables.forEach(t =>
-      localStorage.setItem(`kcafe_table_${t.index}`, JSON.stringify(t))
+      localStorage.setItem(`kcafe_table_${t.table_id}`, JSON.stringify(t))
     );
   }, [tables]);
 
@@ -101,9 +114,45 @@ const KCafe = ({ hideMenu = false }) => {
   // Pending / form states for Add/Edit
   const [pendingTable, setPendingTable]         = useState(null);
   const [showAddForm, setShowAddForm]           = useState(false);
-  const [newTableInput, setNewTableInput]       = useState({ id:'', capacity:4, description:'', width:1, height:1, extraSeatLimit:0, tags:[] });
+  const [newTableInput, setNewTableInput]       = useState(
+    {
+      table_id: '',
+      floor: '1F',
+      index: 0,
+      name: '',
+      left: 50,
+      top: 50,
+      width: 1,
+      height: 1,
+      capacity: 4,
+      occupied: 0,
+      extraSeatLimit: 0,
+      tags: [],
+      description: '',
+      updateTime: null,
+      available: true
+    }    
+  );
   const [showEditForm, setShowEditForm]         = useState(false);
-  const [editTableInput, setEditTableInput]     = useState({ index:null, id:'', capacity:4, description:'', width:1, height:1, extraSeatLimit:0, tags:[] });
+  const [editTableInput, setEditTableInput]     = useState(
+    {
+      table_id: '',
+      floor: '1F',
+      index: 0,
+      name: '',
+      left: 50,
+      top: 50,
+      width: 1,
+      height: 1,
+      capacity: 4,
+      occupied: 0,
+      extraSeatLimit: 0,
+      tags: [],
+      description: '',
+      updateTime: null,
+      available: true
+    }
+  );
 
   // Delete / Move modes
   const [deleteTableMode, setDeleteTableMode]           = useState(false);
@@ -144,11 +193,15 @@ const KCafe = ({ hideMenu = false }) => {
     while (used.includes(idx)) idx++;
     return idx;
   };
+  const DEFAULT_FLOOR = '1F';
+  function makeTableId(floor, index) {
+    return `${floor}_${String(index).padStart(2, '0')}`;
+  }
 
   // Increment/decrement occupied
-  const updateTableOccupied = (tableIndex, delta) => {
+  const updateTableOccupied = (tableId, delta) => {
     setTables(tables.map(t => {
-      if (t.index !== tableIndex) return t;
+      if (t.table_id !== tableId) return t;
       const maxOcc = t.capacity + (t.extraSeatLimit || 0);
       return {
         ...t,
@@ -171,15 +224,15 @@ const KCafe = ({ hideMenu = false }) => {
   };
 
   // ----- Drag Handlers -----
-  const handleTableMouseDown = (idx, e) => {
+  const handleTableMouseDown = (tableId, e) => {
     if (mode !== 'edit') return;
-    const isPend = pendingTable?.index === idx;
+    const isPend = pendingTable?.table_id === tableId;
     if (!isPend && !moveTableMode) return;
     e.preventDefault();
     const rect = e.target.getBoundingClientRect();
     setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    setDraggingTable(idx);
-    if (moveTableMode && !isPend) setSelectedToMoveTable(idx);
+    setDraggingTable(tableId);
+    if (moveTableMode && !isPend) setSelectedToMoveTable(tableId);
   };
 
   const handleTableMouseMove = e => {
@@ -191,7 +244,7 @@ const KCafe = ({ hideMenu = false }) => {
     const snapY = Math.round(rawY / GRID_UNIT_Y) * GRID_UNIT_Y;
     const clamped = pct => Math.max(0, Math.min(100, pct));
 
-    const isPend = pendingTable?.index === draggingTable;
+    const isPend = pendingTable?.table_id === draggingTable;
     if (!isPend && !moveTableMode) return;
 
     if (isPend) {
@@ -202,7 +255,7 @@ const KCafe = ({ hideMenu = false }) => {
       }));
     } else {
       setTables(tables.map(t =>
-        t.index === draggingTable
+        t.table_id === draggingTable
           ? { ...t, left: clamped(snapX), top: clamped(snapY) }
           : t
       ));
@@ -215,29 +268,44 @@ const KCafe = ({ hideMenu = false }) => {
   const openAddForm = () => {
     if (mode !== 'edit' || deleteTableMode || moveTableMode || pendingTable) return;
     const idx       = getNextTableIndex();
-    const defaultId = String.fromCharCode(65 + ((idx - 1) % 26));
-    setShowAddForm(true);
+       const floor = DEFAULT_FLOOR;
+       const tid   = makeTableId(floor, idx);                 // e.g. "1F_04"
+       const name  = String.fromCharCode(65 + ((idx - 1) % 26)); // "A","B"…
+       setShowAddForm(true);
+       setNewTableInput({
+         table_id: tid,
+         floor,
+         index: idx,
+         name,
+         left: 50, top: 50,
+         width:1, height:1,
+         capacity:4, occupied:0,
+         extraSeatLimit:0,
+         tags: [], description:'',
+         updateTime: null,
+         available: true
+       });
     setMenuOpen(false);
-    setNewTableInput({ id: defaultId, capacity:4, description:'', width:1, height:1, extraSeatLimit:0, tags:[] });
   };
   const cancelAddForm = () => setShowAddForm(false);
   const submitAddForm = () => {
     const idx = getNextTableIndex();
-    const id  = newTableInput.id.trim() || String.fromCharCode(65 + ((idx - 1) % 26));
+    // 預設 name：A, B, C…
+    const defaultName = String.fromCharCode(65 + ((idx - 1) % 26));
+    const name = newTableInput.name.trim() || defaultName;
+
     setPendingTable({
+      ...newTableInput,
+      name,
       index: idx,
-      id,
-      left: 50,
-      top: 50,
-      occupied: 0,
-      ...newTableInput
+      table_id: makeTableId(DEFAULT_FLOOR, idx)
     });
     setShowAddForm(false);
   };
   const cancelAddTable = () => setPendingTable(null);
   const confirmAddTable = () => {
     if (!pendingTable) return;
-    setTables([...tables, pendingTable]);
+    setTables(tables => [...tables, pendingTable]);
     setPendingTable(null);
   };
 
@@ -250,7 +318,7 @@ const KCafe = ({ hideMenu = false }) => {
   const confirmDeleteTable = () => {
     if (selectedToDeleteTable == null) return;
     localStorage.removeItem(`kcafe_table_${selectedToDeleteTable}`);
-    setTables(prev => prev.filter(t => t.index !== selectedToDeleteTable));
+    setTables(prev => prev.filter(t => t.table_id !== selectedToDeleteTable));
     setDeleteTableMode(false);
     setSelectedToDeleteTable(null);
   };
@@ -279,17 +347,23 @@ const KCafe = ({ hideMenu = false }) => {
   };
 
   // ----- Edit Table Flow -----
-  const openEditForm = idx => {
-    const t = tables.find(x => x.index === idx);
+  const openEditForm = tableId => {
+    const t = tables.find(x => x.table_id === tableId);
     if (!t) return;
     setEditTableInput({ ...t });
     setShowEditForm(true);
   };
   const cancelEditForm = () => setShowEditForm(false);
   const saveEditForm = () => {
-    setTables(tables.map(t =>
-      t.index !== editTableInput.index ? t : { ...editTableInput }
-    ));
+    setTables(tables.map(t => {
+      if (t.table_id !== editTableInput.table_id) return t;
+      // 如果 name 空白，就保留原來的 t.name
+      const name = editTableInput.name.trim() || t.name;
+      return {
+        ...editTableInput,
+        name
+      };
+    }));
     setShowEditForm(false);
   };
 
@@ -358,7 +432,7 @@ const KCafe = ({ hideMenu = false }) => {
         bgOffset={bgOffset}
         handleRotate={rotateLayout}
         rotateCount={rotateCount}
-        handleTableMouseDown={handleTableMouseDown}
+        handleTableMouseDown={(id,e) => handleTableMouseDown(id, e)}
         deleteTableMode={deleteTableMode}
         selectedToDeleteTable={selectedToDeleteTable}
         onSelectDeleteTable={setSelectedToDeleteTable}

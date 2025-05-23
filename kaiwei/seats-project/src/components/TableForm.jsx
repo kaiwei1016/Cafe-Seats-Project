@@ -17,9 +17,9 @@ export default function TableForm({
     ? `新增桌子 ${nextIndex}`
     : `編輯桌子 ${tableInput.index}`;
   const submitLabel = isAdd ? '新增' : '儲存';
-  const idPlaceholder = isAdd
-    ? '留空則自動編號'
-    : '留空則保留原編號';
+  const namePlaceholder = isAdd
+    ? '留空則自動生成'
+    : '留空則保留原桌名';
 
   // tags array ⇄ comma string
   const tagsString = Array.isArray(tableInput.tags)
@@ -71,7 +71,7 @@ export default function TableForm({
         {horizontalLines}
 
         {/* 內容 */}
-        <div className="table-id">{tableInput.id}</div>
+        <div className="table-id">{tableInput.name}</div>
         <div className="table-info">
           0/{tableInput.capacity}
           {tableInput.extraSeatLimit > 0 && (
@@ -101,12 +101,12 @@ export default function TableForm({
             {/* 基本設定面板 */}
             <div className="page basic-page">
               <label>
-                桌號 (ID):
+                桌名 (Name):
                 <input
                   type="text"
-                  value={tableInput.id}
-                  placeholder={idPlaceholder}
-                  onChange={e => onInputChange('id', e.target.value)}
+                  value={tableInput.name}
+                  placeholder={namePlaceholder}
+                  onChange={e => onInputChange('name', e.target.value)}
                 />
               </label>
               <label>

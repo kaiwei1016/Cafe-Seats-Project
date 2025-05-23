@@ -4,8 +4,8 @@ import '../styles/Table.css';
 
 
 const Table = ({
-  tableIndex,
-  id,
+  tableId,
+  name,
   left,
   top,
   capacity,
@@ -35,8 +35,8 @@ const Table = ({
   const maxOccupancy = capacity + extraSeatLimit;
   const isFull       = occupied >= maxOccupancy;
   const isPartial    = occupied > 0 && occupied < maxOccupancy;
-  const isMoving     = moveTableMode && selectedToMoveTable === tableIndex;
-  const isDeleting   = deleteTableMode && selectedToDeleteTable === tableIndex;
+  const isMoving     = moveTableMode && selectedToMoveTable === tableId;
+  const isDeleting   = deleteTableMode && selectedToDeleteTable === tableId;
 
   // Format ISO timestamp to “X 分鐘前 / 小時前 / 天前”
   const formatRelative = iso => {
@@ -124,7 +124,7 @@ const Table = ({
         className={`table ${isFull ? 'full' : ''} ${isPartial ? 'partial' : ''}`}
         style={tableStyle}
       >
-        <div className="table-id">{id}</div>
+        <div className="table-id">{name}</div>
         <div className="table-info">
           {occupied}/{capacity}
           {extraSeatLimit > 0 && <span className="extra">(+{extraSeatLimit})</span>}

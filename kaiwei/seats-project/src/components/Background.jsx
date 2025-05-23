@@ -39,9 +39,9 @@ const Background = ({
       {/* 渲染桌子 */}
       {tables.map(tbl => (
         <Table
-          key={tbl.index}
-          tableIndex={tbl.index}
-          id={tbl.id}
+          key={tbl.table_id}
+          tableId={tbl.table_id}
+          name={tbl.name}
           left={tbl.left}
           top={tbl.top}
           capacity={tbl.capacity}
@@ -52,12 +52,12 @@ const Background = ({
           updateTime={tbl.updateTime}
           tags={tbl.tags}
           mode={mode}
-          updateOccupied={delta => updateTableOccupied(tbl.index, delta)}
-          onMouseDown={e => handleTableMouseDown(tbl.index, e)}
+          updateOccupied={delta => updateTableOccupied(tbl.table_id, delta)}
+          onMouseDown={e => handleTableMouseDown(tbl.table_id, e)}
           deleteTableMode={deleteTableMode}
           selectedToDeleteTable={selectedToDeleteTable}
-          onSelectDeleteTable={() => onSelectDeleteTable(tbl.index)}
-          onEdit={() => onEditTable(tbl.index)}
+          onSelectDeleteTable={() => onSelectDeleteTable(tbl.table_id)}
+          onEdit={() => onEditTable(tbl.table_id)}
           moveTableMode={moveTableMode}
           selectedToMoveTable={selectedToMoveTable}
         />
@@ -73,10 +73,10 @@ const Background = ({
       width:  `${pendingTable.width  * 4}%`,  // 半角 % 喔
       height: `${pendingTable.height * 6}%`
     }}
-    onMouseDown={e => handleTableMouseDown(pendingTable.index, e)}
+    onMouseDown={e => handleTableMouseDown(pendingTable.table_id, e)}
   >
     <div className="table pending" style={{ width: '100%', height: '100%' }}>
-      <div className="table-id">{pendingTable.id}</div>
+      <div className="table-id">{pendingTable.name}</div>
       <div className="table-info">0/{pendingTable.capacity}</div>
     </div>
   </div>

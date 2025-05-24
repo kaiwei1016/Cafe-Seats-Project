@@ -17,6 +17,19 @@ const Background = ({
   handleRotate,
   rotateCount
 }) => {
+
+  const isVertical = rotateCount % 2 !== 0;
+let objectPosition;
+
+if (!isVertical) {
+  objectPosition = `${bgOffset.x}% ${bgOffset.y}%`;
+} else {
+  // 90° CCW (rotate(-90deg)) 或 270° CW
+  const newX = bgOffset.y;
+  const newY = 100 - bgOffset.x;
+  objectPosition = `${newX}% ${newY}%`;
+}
+
   return (
     <div className={`background ${mode === 'edit' ? 'show-grid' : ''}`}>
       {/* 旋轉按鈕 */}
@@ -26,11 +39,11 @@ const Background = ({
       {/* 背景圖：純粹視覺旋轉 */}
       <img
         src={bgImage}
-        alt="KCafe Background"
+        alt=""
         className="bg-image"
         style={{
           transform: `rotate(${-rotateCount * 90}deg)`,
-          objectPosition: `${bgOffset.x}% ${bgOffset.y}%`
+          objectPosition
         }}
         draggable={false}
         onDragStart={e => e.preventDefault()}

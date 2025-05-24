@@ -1,15 +1,12 @@
+// src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/Navbar.css';
 
 export default function Navbar({
   hideMenu,
-  isEditingBg,
-  startBgEdit,
-  cancelBgEdit,
-  confirmBgEdit,
-  zoom,
-  setZoom,
-  offsetPx, 
+  openBgForm,
+  bgCropData,
+  onImportData,
   mode,
   menuOpen,
   setMenuOpen,
@@ -49,59 +46,130 @@ export default function Navbar({
 
   const isTableAction = deleteTableMode || moveTableMode;
   const sortedTables = [...tables].sort((a, b) => a.index - b.index);
+  const fileInputRef = useRef(null);
+
+  // 觸發檔案選擇
+  const handleImportClick = () => {
+    fileInputRef.current.value = null; 
+    fileInputRef.current.click();
+  };
+
+  // 讀檔並解析
+  const handleFileChange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const lines = evt.target.result.split(/\r?\n/);
+      // 1. 讀背景裁切資料
+      const [cropX, cropY, cropW, cropH] = lines[1]
+        .split(',')
+        .map(v => parseFloat(v) || 0);
+      const bgCrop = { x: cropX, y: cropY, width: cropW, height: cropH };
+
+      // 2. 讀桌子欄位名稱（第 4 列）
+      const header = lines[3].split(',');
+
+      // 3. 讀桌子資料（第 5 列以後）
+      const tableRows = lines.slice(4).filter(l => l.trim() !== '');
+      const importedTables = tableRows.map(row => {
+        const cols = row.split(',');
+        const obj = {};
+        header.forEach((h, i) => {
+          let val = cols[i];
+          // 去掉字串前後雙引號並還原雙引號
+          if (val.startsWith('"') && val.endsWith('"')) {
+            val = val.slice(1, -1).replace(/""/g, '"');
+          }
+          switch (h) {
+            case 'index':
+            case 'left': case 'top':
+            case 'width': case 'height':
+            case 'capacity': case 'occupied':
+            case 'extraSeatLimit': case 'available':
+              obj[h] = Number(val);
+              break;
+            case 'tags':
+              obj.tags = val ? val.split(',') : [];
+              break;
+            default:
+              obj[h] = val;
+          }
+        });
+        return obj;
+      });
+
+      // 4. 呼叫父層回調
+      onImportData({ bgCrop, tables: importedTables });
+    };
+    reader.readAsText(file, 'utf-8');
+  };
 
   // 匯出 CSV
   const exportCSV = () => {
-    // ① 背景設定（offset & zoom）
-    const bgHeader = ['offset_x', 'offset_y', 'zoom'];
-    const bgRow    = [offsetPx.x, offsetPx.y, zoom];
-  
-    // ② 桌位表頭
-    const tableHeader = [
-      'table_id', 'index', 'name', 'left', 'top', 'width', 'height',
-      'capacity', 'occupied', 'extraSeatLimit', 'tags',
-      'description', 'updateTime', 'available', 'floor'
-    ];
-    const FLOOR = '1F';
-  
-    // ③ 桌位資料列
-    const tableRows = sortedTables.map(t => [
-      t.table_id,
-      t.index,
-      `"${t.name.replace(/"/g, '""')}"`,
-      t.left,
-      t.top,
-      t.width,
-      t.height,
-      t.capacity,
-      t.occupied,
-      t.extraSeatLimit,
-      Array.isArray(t.tags)
-        ? `"${t.tags.join(',').replace(/"/g, '""')}"` : '""',
-      `"${(t.description || '').replace(/"/g, '""')}"`,
-      t.updateTime || '',
-      t.available,
-      t.floor || FLOOR
-    ]);
-  
-    // ④ 組合 CSV 文字
-    const csvLines = [
-      [...bgHeader, ...tableHeader].join(','),   // 全表頭
-      [...bgRow,    ...Array(tableHeader.length).fill('')].join(','), // 背景設定列
-      ...tableRows.map(r => ['', '', '', ...r].join(','))            // 每列桌子資料
-    ];
-    const csvText = csvLines.join('\r\n');
-  
-    // ⑤ 下載
-    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const bgHeader = ['cropX','cropY','cropWidth','cropHeight'].join(',');
+    const bgData = [
+      bgCropData?.x ?? '',
+      bgCropData?.y ?? '',
+      bgCropData?.width ?? '',
+      bgCropData?.height ?? ''
+    ].join(',');
+
+     const header = [
+       'table_id',
+       'index',
+       'name',
+       'left',
+       'top',
+       'width',
+       'height',
+       'capacity',
+       'occupied',
+       'extraSeatLimit',
+       'tags',
+       'description',
+       'updateTime',
+       'available',
+       'floor'
+     ].join(',');
+
+    const rows = sortedTables.map(t => [
+       t.table_id,
+       t.index,
+       `"${t.name.replace(/"/g, '""')}"`,
+       t.left,
+       t.top,
+       t.width,
+       t.height,
+       t.capacity,
+       t.occupied,
+       t.extraSeatLimit,
+       Array.isArray(t.tags)
+         ? `"${t.tags.join(',').replace(/"/g, '""')}"`
+         : '""',
+       `"${(t.description||'').replace(/"/g, '""')}"`,
+       t.updateTime || '',
+       t.available,
+       t.floor || '1F'
+    ].join(','));
+
+    // 組合所有列：背景欄位 → 背景值 → 空行 → 桌子欄位 → 桌子資料
+    const csvContent = [
+      bgHeader,
+      bgData,
+      '',
+      header,
+      ...rows
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
     a.download = 'table_data.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
-  
 
   return (
     <div className="navbar-wrapper">
@@ -117,21 +185,18 @@ export default function Navbar({
             <button
               className={mode === 'business' ? 'active' : ''}
               onClick={() => setMode('business')}
-              disabled={isTableAction}
             >
               營業模式
             </button>
             <button
               className={mode === 'edit' ? 'active' : ''}
               onClick={() => setMode('edit')}
-              disabled={isTableAction}
             >
               編輯模式
             </button>
             <button
               className={mode === 'view' ? 'active' : ''}
               onClick={() => setMode('view')}
-              disabled={isTableAction}
             >
               觀察模式
             </button>
@@ -152,6 +217,15 @@ export default function Navbar({
               {menuOpen && (
                 <div className="menu-dropdown">
                   <button onClick={exportCSV}>匯出桌位資料</button>
+                  <button onClick={handleImportClick}>匯入桌位資料</button>
+                  {/* 隱藏的 File Input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                  />
                   <button
                     onClick={() => setShowQRCodeOptions(v => !v)}
                   >
@@ -225,23 +299,6 @@ export default function Navbar({
               </button>
               <button onClick={cancelDeleteTableMode}>取消刪除</button>
             </>
-          ) : isEditingBg ? (
-            <>
-              <button onClick={confirmBgEdit}>儲存變更</button>
-              <button onClick={cancelBgEdit}>取消變更</button>
-              <label className="zoom-slider">
-              縮放：
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.01"
-                value={zoom}
-                onChange={e => setZoom(parseFloat(e.target.value))}
-              />
-              {zoom.toFixed(2)}×
-            </label>
-            </>
           ) : (
             <>
               <button onClick={addTable}>新增桌子</button>
@@ -261,7 +318,7 @@ export default function Navbar({
               >
                 移動桌子
               </button>
-              <button onClick={startBgEdit}>背景圖片</button>
+              <button onClick={openBgForm}>背景圖片</button>
             </>
           )
         )}

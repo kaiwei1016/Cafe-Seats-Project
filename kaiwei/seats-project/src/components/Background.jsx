@@ -3,56 +3,40 @@ import Table from './Table';
 import '../styles/Background.css';
 
 const Background = ({
-  /* 背景 */
-  zoom,
-  isEditingBg,
-  draggingBg,
-  offsetPx,          // 像素位移 (正式或暫存皆由父層決定)
-  onBgMouseDown,
-  rotateCount,
-  handleRotate,
-
-  /* 桌子 */
   tables,
   pendingTable,
   updateTableOccupied,
-  mode,
+  mode, bgOffset, bgImage,
   handleTableMouseDown,
   deleteTableMode,
   selectedToDeleteTable,
   onSelectDeleteTable,
   onEditTable,
   moveTableMode,
-  selectedToMoveTable
+  selectedToMoveTable,
+  handleRotate,
+  rotateCount
 }) => {
   return (
     <div className={`background ${mode === 'edit' ? 'show-grid' : ''}`}>
-      <button
-        className="rotate-button"
-        onClick={handleRotate}
-        disabled={isEditingBg}
-      >
+      {/* 旋轉按鈕 */}
+      <button className="rotate-button" onClick={handleRotate}>
         ⟳
       </button>
-
-      {/* 背景區塊改成 div + background-image */}
-      <div
+      {/* 背景圖：純粹視覺旋轉 */}
+      <img
+        src={bgImage}
+        alt="KCafe Background"
         className="bg-image"
         style={{
-          backgroundImage: 'url(/img/KCafe.jpg)',
-          backgroundPosition: `${offsetPx.x}px ${offsetPx.y}px`,
-          backgroundSize: `${zoom * 100}%`,
-          backgroundRepeat: 'no-repeat',
           transform: `rotate(${-rotateCount * 90}deg)`,
-          pointerEvents: isEditingBg ? 'all' : 'none',
-          cursor: isEditingBg
-            ? (draggingBg ? 'grabbing' : 'grab')
-            : 'default'
+          objectPosition: `${bgOffset.x}% ${bgOffset.y}%`
         }}
-        onMouseDown={isEditingBg ? onBgMouseDown : undefined}
+        draggable={false}
+        onDragStart={e => e.preventDefault()}
       />
 
-      {/* 桌子 */}
+      {/* 渲染桌子 */}
       {tables.map(tbl => (
         <Table
           key={tbl.table_id}
@@ -68,7 +52,6 @@ const Background = ({
           updateTime={tbl.updateTime}
           tags={tbl.tags}
           mode={mode}
-          disableInteraction={isEditingBg}
           updateOccupied={delta => updateTableOccupied(tbl.table_id, delta)}
           onMouseDown={e => handleTableMouseDown(tbl.table_id, e)}
           deleteTableMode={deleteTableMode}
@@ -80,26 +63,26 @@ const Background = ({
         />
       ))}
 
-      {/* pendingTable 半透明預覽 */}
-      {pendingTable && (
-        <div
-          className="table-container pending"
-          style={{
-            left: `${pendingTable.left}%`,
-            top: `${pendingTable.top}%`,
-            width: `${pendingTable.width * 4}%`,
-            height: `${pendingTable.height * 6}%`
-          }}
-          onMouseDown={e => handleTableMouseDown(pendingTable.table_id, e)}
-        >
-          <div className="table pending" style={{ width: '100%', height: '100%' }}>
-            <div className="table-id">{pendingTable.name}</div>
-            <div className="table-info">
-              0/{pendingTable.capacity}
-            </div>
-          </div>
-        </div>
-      )}
+{/* pendingTable 的半透明預覽 */}
+{pendingTable && (
+  <div
+    className="table-container pending"
+    style={{
+      left:   `${pendingTable.left}%`,
+      top:    `${pendingTable.top}%`,
+      width:  `${pendingTable.width  * 4}%`,  // 半角 % 喔
+      height: `${pendingTable.height * 6}%`
+    }}
+    onMouseDown={e => handleTableMouseDown(pendingTable.table_id, e)}
+  >
+    <div className="table pending" style={{ width: '100%', height: '100%' }}>
+      <div className="table-id">{pendingTable.name}</div>
+      <div className="table-info">0/{pendingTable.capacity}</div>
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 };

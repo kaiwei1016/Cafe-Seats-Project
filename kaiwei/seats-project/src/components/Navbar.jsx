@@ -1,10 +1,15 @@
-// src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/Navbar.css';
 
 export default function Navbar({
   hideMenu,
-  openBgForm,
+  isEditingBg,
+  startBgEdit,
+  cancelBgEdit,
+  confirmBgEdit,
+  zoom,
+  setZoom,
+  offsetPx, 
   mode,
   menuOpen,
   setMenuOpen,
@@ -47,26 +52,20 @@ export default function Navbar({
 
   // 匯出 CSV
   const exportCSV = () => {
-    const header = [
-      'table_id',
-      'index',
-      'name',
-      'left',
-      'top',
-      'width',
-      'height',
-      'capacity',
-      'occupied',
-      'extraSeatLimit',
-      'tags',
-      'description',
-      'updateTime',
-      'available',
-      'floor'
+    // ① 背景設定（offset & zoom）
+    const bgHeader = ['offset_x', 'offset_y', 'zoom'];
+    const bgRow    = [offsetPx.x, offsetPx.y, zoom];
+  
+    // ② 桌位表頭
+    const tableHeader = [
+      'table_id', 'index', 'name', 'left', 'top', 'width', 'height',
+      'capacity', 'occupied', 'extraSeatLimit', 'tags',
+      'description', 'updateTime', 'available', 'floor'
     ];
     const FLOOR = '1F';
-
-    const rows = sortedTables.map(t => [
+  
+    // ③ 桌位資料列
+    const tableRows = sortedTables.map(t => [
       t.table_id,
       t.index,
       `"${t.name.replace(/"/g, '""')}"`,
@@ -77,22 +76,32 @@ export default function Navbar({
       t.capacity,
       t.occupied,
       t.extraSeatLimit,
-      Array.isArray(t.tags) ? `"${t.tags.join(',').replace(/"/g, '""')}"` : '""',
+      Array.isArray(t.tags)
+        ? `"${t.tags.join(',').replace(/"/g, '""')}"` : '""',
       `"${(t.description || '').replace(/"/g, '""')}"`,
       t.updateTime || '',
       t.available,
       t.floor || FLOOR
-    ].join(','));
-
-    const csv = [header.join(','), ...rows].join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    ]);
+  
+    // ④ 組合 CSV 文字
+    const csvLines = [
+      [...bgHeader, ...tableHeader].join(','),   // 全表頭
+      [...bgRow,    ...Array(tableHeader.length).fill('')].join(','), // 背景設定列
+      ...tableRows.map(r => ['', '', '', ...r].join(','))            // 每列桌子資料
+    ];
+    const csvText = csvLines.join('\r\n');
+  
+    // ⑤ 下載
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
     a.download = 'table_data.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
+  
 
   return (
     <div className="navbar-wrapper">
@@ -108,18 +117,21 @@ export default function Navbar({
             <button
               className={mode === 'business' ? 'active' : ''}
               onClick={() => setMode('business')}
+              disabled={isTableAction}
             >
               營業模式
             </button>
             <button
               className={mode === 'edit' ? 'active' : ''}
               onClick={() => setMode('edit')}
+              disabled={isTableAction}
             >
               編輯模式
             </button>
             <button
               className={mode === 'view' ? 'active' : ''}
               onClick={() => setMode('view')}
+              disabled={isTableAction}
             >
               觀察模式
             </button>
@@ -213,6 +225,23 @@ export default function Navbar({
               </button>
               <button onClick={cancelDeleteTableMode}>取消刪除</button>
             </>
+          ) : isEditingBg ? (
+            <>
+              <button onClick={confirmBgEdit}>儲存變更</button>
+              <button onClick={cancelBgEdit}>取消變更</button>
+              <label className="zoom-slider">
+              縮放：
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.01"
+                value={zoom}
+                onChange={e => setZoom(parseFloat(e.target.value))}
+              />
+              {zoom.toFixed(2)}×
+            </label>
+            </>
           ) : (
             <>
               <button onClick={addTable}>新增桌子</button>
@@ -232,7 +261,7 @@ export default function Navbar({
               >
                 移動桌子
               </button>
-              <button onClick={openBgForm}>背景圖片</button>
+              <button onClick={startBgEdit}>背景圖片</button>
             </>
           )
         )}

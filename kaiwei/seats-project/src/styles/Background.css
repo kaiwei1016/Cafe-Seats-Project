@@ -5,6 +5,7 @@
   height: calc(100vw *  16 / 25);
   overflow: hidden;
 }
+
 .bg-image {
   position: absolute;       /* 绝对定位，填满容器 */
   top: 0;

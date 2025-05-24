@@ -6,6 +6,7 @@ export default function Navbar({
   hideMenu,
   openBgForm,
   bgCropData,
+  bgZoom, 
   onImportData,
   mode,
   menuOpen,
@@ -62,9 +63,10 @@ export default function Navbar({
     reader.onload = evt => {
       const lines = evt.target.result.split(/\r?\n/);
       // 1. 讀背景裁切資料
-      const [cropX, cropY, cropW, cropH] = lines[1]
+      const [cropX, cropY, cropW, cropH, cropZ] = lines[1]
         .split(',')
         .map(v => parseFloat(v) || 0);
+      const bgZoomImported = cropZ;
       const bgCrop = { x: cropX, y: cropY, width: cropW, height: cropH };
 
       // 2. 讀桌子欄位名稱（第 4 列）
@@ -100,19 +102,20 @@ export default function Navbar({
       });
 
       // 4. 呼叫父層回調
-      onImportData({ bgCrop, tables: importedTables });
+      onImportData({ bgCrop, bgZoom: bgZoomImported, tables: importedTables });
     };
     reader.readAsText(file, 'utf-8');
   };
 
   // 匯出 CSV
   const exportCSV = () => {
-    const bgHeader = ['cropX','cropY','cropWidth','cropHeight'].join(',');
+    const bgHeader = ['cropX','cropY','cropWidth','cropHeight','cropZoom'].join(',');
     const bgData = [
       bgCropData?.x ?? '',
       bgCropData?.y ?? '',
       bgCropData?.width ?? '',
-      bgCropData?.height ?? ''
+      bgCropData?.height ?? '',
+      bgZoom ?? ''
     ].join(',');
 
      const header = [

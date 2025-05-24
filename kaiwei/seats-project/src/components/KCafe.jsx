@@ -127,19 +127,32 @@ const KCafe = ({ hideMenu = false }) => {
   });
   
     // 匯入資料的處理函式
-  const handleImportData = async ({ bgCrop, tables: newTables }) => {
+  const handleImportData = async ({
+    bgCrop,
+    bgZoom: importedZoom,
+    tables: newTables
+  }) => {
+    const importedCrop   = bgCrop;
+    const importedTables = newTables;
+
+    setBgZoom(importedZoom);
+    localStorage.setItem('kcafe_bg_zoom', importedZoom.toString());
     // 1. 更新桌子
-    setTables(newTables);
+    setTables(importedTables);
     newTables.forEach(t =>
       localStorage.setItem(`kcafe_table_${t.table_id}`, JSON.stringify(t))
     );
 
     // 2. 更新背景裁切參數
-    setBgCropData(bgCrop);
-    localStorage.setItem('kcafe_bg_crop', JSON.stringify(bgCrop));
+    setBgCropData(importedCrop);
+    localStorage.setItem('kcafe_bg_crop', JSON.stringify(importedCrop));
 
-    // 3. 重新用原圖裁切出背景
-    const croppedUrl = await getCroppedImg('/img/KCafe.jpg', bgCrop);
+    // 3. 更新 zoom
+    setBgZoom(bgZoom);
+    localStorage.setItem('kcafe_bg_zoom', bgZoom.toString());
+
+    // 4. 重新用原圖裁切出背景
+    const croppedUrl = await getCroppedImg('/img/KCafe.jpg', importedCrop);
     setBgImage(croppedUrl);
     localStorage.setItem('kcafe_bg_img', croppedUrl);
   };
@@ -441,6 +454,7 @@ const KCafe = ({ hideMenu = false }) => {
         mode={mode}
         openBgForm={openBgForm}
         bgCropData={bgCropData}
+        bgZoom={bgZoom}   
         onImportData={handleImportData}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}

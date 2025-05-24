@@ -4,7 +4,7 @@ import '../styles/BackgroundForm.css';
 
 export default function BackgroundForm({
   srcOriginal,
-  initialCrop = { x: 0, y: 0 },
+  initialCrop = { x: 0, y: 0, width: 100, height: 100 },
   initialZoom = 1,
   onSave, onCancel }) {
   // Inline helper: 使用 Canvas 裁切並回傳 Blob URL (白色背景處理)

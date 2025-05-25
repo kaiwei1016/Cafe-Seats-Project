@@ -5,6 +5,7 @@ body {
     flex-direction: column;      /* 改成垂直排 */
     align-items: stretch;         /* 只水平置中 */
   }
+
   .kcafe-container {
     position: relative;
     text-align: center;
@@ -20,6 +21,10 @@ body {
     color: red;
   }
 
-  
+  .main-content {
+  padding: 0px;         /* 與視窗邊緣保持 8px 空隙 */
+  box-sizing: border-box; /* 讓 padding 不影響百分比寬高計算 */
+}
+
 
   

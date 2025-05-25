@@ -36,6 +36,16 @@ function anyOverlap(tables) {
   return false;
 }
 
+function rotateTablesOnce(arr){
+  return arr.map(t => ({
+    ...t,
+    left: 100 - t.top,
+    top:  t.left,
+    width:  t.height,
+    height: t.width
+  }));
+}
+
 const INITIAL_TABLES = [
   { table_id: '1F_01', floor: '1F', index: 1, name: 'A', left: 20, top: 20,
     width: 1, height: 1, capacity: 4, occupied: 2, extraSeatLimit: 0,
@@ -69,10 +79,37 @@ const getCroppedImg = (imageSrc, pixelCrop) =>
     image.onerror = reject;
   });
 
+  const rotateImage = (src, angle) =>
+    new Promise((resolve, reject) => {
+      const deg = ((angle % 360) + 360) % 360;
+      if (deg === 0) return resolve(src); // 無需旋轉
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = src;
+      img.onload = () => {
+        const swap = deg === 90 || deg === 270;
+        const canvas = document.createElement('canvas');
+        canvas.width = swap ? img.height : img.width;
+        canvas.height = swap ? img.width : img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((deg * Math.PI) / 180);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        canvas.toBlob((b) => {
+          if (!b) return reject(new Error('canvas empty'));
+          resolve(URL.createObjectURL(b));
+        }, 'image/jpeg');
+      };
+      img.onerror = reject;
+    });
+
 const DEFAULT_CROP = { x: 0, y: 0, width: 1000, height: 640 };
 const DEFAULT_ZOOM = 1;
 
 const KCafe = ({ hideMenu = false }) => {
+
+  const [rotateCount, setRotateCount] = useState(hideMenu ? 1 : 0);
   const [showBgForm, setShowBgForm] = useState(false);
   const [bgHidden, setBgHidden] = useState(() => {
    if (!hideMenu) return false;
@@ -110,10 +147,19 @@ const KCafe = ({ hideMenu = false }) => {
 
   // Generate cropped background on mount and when crop changes
   useEffect(() => {
+    let prevUrl;
     getCroppedImg('/img/KCafe.jpg', bgCropData)
-      .then(url => setBgImage(url))
+      .then((url) => rotateImage(url, rotateCount * 90))
+      .then((finalUrl) => {
+        setBgImage(finalUrl);
+        prevUrl = finalUrl;
+      })
       .catch(console.error);
-  }, [bgCropData]);
+
+    return () => {
+      if (prevUrl) URL.revokeObjectURL(prevUrl);
+    };
+  }, [bgCropData, rotateCount]);
 
   // Handlers for background form
   const openBgForm = () => setShowBgForm(true);
@@ -143,24 +189,21 @@ const KCafe = ({ hideMenu = false }) => {
   // Tables loaded from localStorage or default
   const [tables, setTables] = useState(() => {
     const restored = [];
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('kcafe_table_')) {
-        try {
-          restored.push(JSON.parse(localStorage.getItem(key)));
-        } catch {}
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('kcafe_table_')) {
+        try { restored.push(JSON.parse(localStorage.getItem(k))); } catch {}
       }
     });
-    return restored.length ? restored : INITIAL_TABLES;
+    const base = restored.length ? restored : INITIAL_TABLES;
+    return hideMenu ? rotateTablesOnce(base) : base;  // 顧客視角先旋轉
   });
   // Persist to localStorage on every change
   useEffect(() => {
+    if (hideMenu) return; 
     tables.forEach(t =>
       localStorage.setItem(`kcafe_table_${t.table_id}`, JSON.stringify(t))
     );
   }, [tables]);
-
-  // Rotation count (0–3), rotates layout 90° each time
-  const [rotateCount, setRotateCount] = useState(0);
 
   // Pending / form states for Add/Edit
   const [pendingTable, setPendingTable]         = useState(null);
@@ -262,15 +305,8 @@ const KCafe = ({ hideMenu = false }) => {
     }));
   };
 
-  // Rotate all tables & swap width/height
   const rotateLayout = () => {
-    setTables(tables.map(t => ({
-      ...t,
-      left:   t.top,
-      top:    100 - t.left,
-      width:  t.height,
-      height: t.width
-    })));
+    setTables(prev => rotateTablesOnce(prev));
     setRotateCount(c => (c + 1) % 4);
   };
 
@@ -480,47 +516,48 @@ const KCafe = ({ hideMenu = false }) => {
           onCancel={showAddForm ? cancelAddForm : cancelEditForm}
         />
       )}
-
-      {/* Background + Tables */}
-      <Background
-        tables={tables}
-        pendingTable={pendingTable}
-        updateTableOccupied={updateTableOccupied}
-        mode={mode}
-        bgOffset={bgOffset}
-        hideImage={bgHidden}
-        hideGrid={gridHidden}
-        bgImage={bgImage || '/img/KCafe.jpg'}
-        handleRotate={rotateLayout}
-        rotateCount={rotateCount}
-        handleTableMouseDown={handleTableMouseDown}
-        deleteTableMode={deleteTableMode}
-        selectedToDeleteTable={selectedToDeleteTable}
-        onSelectDeleteTable={setSelectedToDeleteTable}
-        onEditTable={openEditForm}
-        moveTableMode={moveTableMode}
-        selectedToMoveTable={selectedToMoveTable}
-        draggingTable={draggingTable}
-      />
-
-      {showBgForm && (
-        <BackgroundForm
-          srcOriginal="/img/KCafe.jpg"
-          initialCrop={bgCropData}
-          initialZoom={bgZoom}
-          onSave={saveBgForm}
-          onCancel={cancelBgForm}
+      <div className="main-content">
+        {/* Background + Tables */}
+        <Background
+          tables={tables}
+          pendingTable={pendingTable}
+          updateTableOccupied={updateTableOccupied}
+          mode={mode}
+          bgOffset={bgOffset}
+          hideImage={bgHidden}
+          hideGrid={gridHidden}
+          bgImage={bgImage || '/img/KCafe.jpg'}
+          handleRotate={rotateLayout}
+          rotateCount={rotateCount}
+          handleTableMouseDown={handleTableMouseDown}
+          deleteTableMode={deleteTableMode}
+          selectedToDeleteTable={selectedToDeleteTable}
+          onSelectDeleteTable={setSelectedToDeleteTable}
+          onEditTable={openEditForm}
+          moveTableMode={moveTableMode}
+          selectedToMoveTable={selectedToMoveTable}
+          draggingTable={draggingTable}
         />
-      )}
+
+        {showBgForm && (
+          <BackgroundForm
+            srcOriginal="/img/KCafe.jpg"
+            initialCrop={bgCropData}
+            initialZoom={bgZoom}
+            onSave={saveBgForm}
+            onCancel={cancelBgForm}
+          />
+        )}
 
 
-      {/* Header */}
-      <h2>
-        現在時間：{currentTime.toLocaleString()}
-        <br />
-        目前座位：<span className="remaining">{totalOccupied}</span>/{totalCapacity}
-      </h2>
+        {/* Header */}
+        <h2>
+          現在時間：{currentTime.toLocaleString()}
+          <br />
+          目前座位：<span className="remaining">{totalOccupied}</span>/{totalCapacity}
+        </h2>
 
+      </div>
     </div>
 
     

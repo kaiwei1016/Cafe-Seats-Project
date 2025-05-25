@@ -20,6 +20,10 @@ const Background = ({
 }) => {
 
   const isVertical = rotateCount % 2 !== 0;
+  const orientationClass = isVertical ? 'vertical' : 'horizontal';
+  const unitX = isVertical ? 6.25 : 4;   // X 軸單位 %
+  const unitY = isVertical ? 4    : 6.25; // Y 軸單位 %
+
 let objectPosition;
 
 if (!isVertical) {
@@ -32,7 +36,7 @@ if (!isVertical) {
 }
 
   return (
-    <div className={`background ${mode === 'edit' ? 'show-grid' : ''}`}>
+     <div className={`background ${orientationClass} ${mode === 'edit' ? 'show-grid' : ''}`}>
       {/* 旋轉按鈕 */}
       <button className="rotate-button" onClick={handleRotate}>
         ⟳
@@ -51,12 +55,7 @@ if (!isVertical) {
           src={bgImage}
           alt=""
           className="bg-image"
-          style={{
-            transform: `rotate(${-rotateCount * 90}deg)`,
-            objectPosition
-          }}
-          draggable={false}
-          onDragStart={e => e.preventDefault()}
+          style={{ objectPosition }}
         />
       )}
       {/* 渲染桌子 */}
@@ -75,6 +74,8 @@ if (!isVertical) {
           updateTime={tbl.updateTime}
           tags={tbl.tags}
           mode={mode}
+          unitX={unitX}
+          unitY={unitY}
           hideGridLines={hideGrid}
           updateOccupied={delta => updateTableOccupied(tbl.table_id, delta)}
           onMouseDown={e => handleTableMouseDown(tbl.table_id, e)}
@@ -94,8 +95,8 @@ if (!isVertical) {
     style={{
       left:   `${pendingTable.left}%`,
       top:    `${pendingTable.top}%`,
-      width:  `${pendingTable.width  * 4}%`,  // 半角 % 喔
-      height: `${pendingTable.height * 6}%`
+      width:  `${pendingTable.width  * unitX}%`,
+      height: `${pendingTable.height * unitY}%`
     }}
     onMouseDown={e => handleTableMouseDown(pendingTable.table_id, e)}
   >

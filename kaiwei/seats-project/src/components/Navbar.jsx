@@ -108,21 +108,35 @@ export default function Navbar({
     const reader = new FileReader();
     reader.onload = (evt) => {
       const lines = evt.target.result.split(/\r?\n/);
-      const [cropX, cropY, cropW, cropH, cropZ] = lines[1]
+
+      /* ───────── 1. 讀商家設定 ───────── */
+      // 第 0 列：topbar-title,bgHidden,gridHidden
+      // 第 1 列：      值       , true/false , true/false
+      const [rawTitle, rawBgHidden, rawGridHidden] = lines[1].split(',');
+      const importedTitle      = rawTitle.replace(/^"|"$/g, '').replace(/""/g, '"');
+      const importedBgHidden   = rawBgHidden === 'true';
+      const importedGridHidden = rawGridHidden === 'true';
+
+      /* ───────── 2. 讀背景裁切資訊 ───────── */
+      // 第 3 列：cropX,cropY,cropWidth,cropHeight,cropZoom
+      // 第 4 列：  值
+      const [cropX, cropY, cropW, cropH, cropZ] = lines[4]
         .split(',')
         .map((v) => parseFloat(v) || 0);
-
       const bgCrop = { x: cropX, y: cropY, width: cropW, height: cropH };
       const bgZoomImported = cropZ;
 
-      const header = lines[3].split(',');
-      const tableRows = lines.slice(4).filter((l) => l.trim() !== '');
+      /* ───────── 3. 讀桌位資料 ───────── */
+      // 第 6 列：header
+      // 第 7 起：rows
+      const header = lines[6].split(',');
+      const tableRows = lines.slice(7).filter((l) => l.trim() !== '');
       const importedTables = tableRows.map((row) => {
         const cols = row.split(',');
         const obj = {};
         header.forEach((h, i) => {
           let val = cols[i];
-          if (val.startsWith('"') && val.endsWith('"')) {
+          if (val?.startsWith('"') && val.endsWith('"')) {
             val = val.slice(1, -1).replace(/""/g, '"');
           }
           switch (h) {
@@ -146,66 +160,70 @@ export default function Navbar({
         });
         return obj;
       });
-      onImportData({ bgCrop, bgZoom: bgZoomImported, tables: importedTables });
+
+      /* ───────── 4. 回傳給上層 ───────── */
+      onImportData({
+        title:      importedTitle || 'Seats Viewer',
+        bgHidden:   importedBgHidden,
+        gridHidden: importedGridHidden,
+        bgCrop,
+        bgZoom:     bgZoomImported,
+        tables:     importedTables,
+      });
     };
     reader.readAsText(file, 'utf-8');
   };
 
   const exportCSV = () => {
-    const bgHeader = ['cropX', 'cropY', 'cropWidth', 'cropHeight', 'cropZoom'].join(',');
-    const bgData = [
-      bgCropData?.x ?? '',
-      bgCropData?.y ?? '',
-      bgCropData?.width ?? '',
-      bgCropData?.height ?? '',
-      bgZoom ?? ''
-    ].join(',');
+     const merchantHeader = ['topbar-title', 'bgHidden', 'gridHidden'].join(',');
+      const merchantData   = [
+        `"${title.replace(/"/g, '""')}"`,
+        bgHidden,
+        gridHidden
+      ].join(',');
 
-    const header = [
-      'table_id',
-      'index',
-      'name',
-      'left',
-      'top',
-      'width',
-      'height',
-      'capacity',
-      'occupied',
-      'extraSeatLimit',
-      'tags',
-      'description',
-      'updateTime',
-      'available',
-      'floor'
-    ].join(',');
+      /* ② 背景裁切資訊 */
+      const bgHeader = ['cropX','cropY','cropWidth','cropHeight','cropZoom'].join(',');
+      const bgData   = [
+        bgCropData?.x??'', bgCropData?.y??'',
+        bgCropData?.width??'', bgCropData?.height??'',
+        bgZoom??''
+      ].join(',');
 
-    const rows = sortedTables.map((t) => [
-      t.table_id,
-      t.index,
-      `"${t.name.replace(/"/g, '""')}"`,
-      t.left,
-      t.top,
-      t.width,
-      t.height,
-      t.capacity,
-      t.occupied,
-      t.extraSeatLimit,
-      Array.isArray(t.tags) ? `"${t.tags.join(',').replace(/"/g, '""')}"` : '""',
-      `"${(t.description || '').replace(/"/g, '""')}"`,
-      t.updateTime || '',
-      t.available,
-      t.floor || '1F'
-    ].join(','));
+      /* ③ 桌位表頭與資料 */
+      const header = [
+        'table_id','index','name','left','top','width','height',
+        'capacity','occupied','extraSeatLimit','tags','description',
+        'updateTime','available','floor'
+      ].join(',');
 
-    const csvContent = [bgHeader, bgData, '', header, ...rows].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'table_data.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+      const rows = sortedTables.map(t => [
+        t.table_id, t.index, `"${t.name.replace(/"/g,'""')}"`,
+        t.left, t.top, t.width, t.height,
+        t.capacity, t.occupied, t.extraSeatLimit,
+        Array.isArray(t.tags) ? `"${t.tags.join(',').replace(/"/g,'""')}"` : '""',
+        `"${(t.description||'').replace(/"/g,'""')}"`,
+        t.updateTime||'', t.available, t.floor||'1F'
+      ].join(','));
+
+      /* ④ 組合 CSV */
+      const csvContent = [
+        merchantHeader,
+        merchantData,
+        '',               // 空行
+        bgHeader,
+        bgData,
+        '',               // 再空一行
+        header,
+        ...rows
+      ].join('\r\n');
+
+      const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'table_data.csv'; a.click();
+      URL.revokeObjectURL(url);
+    };
 
   /* ------------------------------------------------------------------ */
   /* Render                                                              */

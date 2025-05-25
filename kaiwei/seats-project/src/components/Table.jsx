@@ -16,6 +16,8 @@ const Table = ({
   updateTime,
   tags = [],
   mode,
+  unitX = 4, 
+  unitY = 6.25,
   hideGridLines = false,
   updateOccupied,
   onEdit,
@@ -28,9 +30,6 @@ const Table = ({
 }) => {
   const [showControls, setShowControls] = useState(false);
   const containerRef = useRef(null);
-
-  // Grid unit in % — each unit is 8% of the background
-  const UNIT_PCT = 4;
 
   // Derived flags
   const maxOccupancy = capacity + extraSeatLimit;
@@ -80,8 +79,8 @@ const Table = ({
   const containerStyle = {
     left:   `${left}%`,
     top:    `${top}%`,
-    width:  `${width * UNIT_PCT}%`,
-    height: `${height * UNIT_PCT* 6.25/4}%`
+    width:  `${width  * unitX}%`,
+    height: `${height * unitY}%`,
   };
 
   const tableStyle = {

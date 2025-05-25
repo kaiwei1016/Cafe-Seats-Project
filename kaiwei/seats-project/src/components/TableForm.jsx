@@ -21,84 +21,86 @@ export default function TableForm({
     ? '留空則自動生成'
     : '留空則保留原桌名';
 
-  // tags array ⇄ comma string
+  // 將 tags 陣列轉成逗號字串
   const tagsString = Array.isArray(tableInput.tags)
     ? tableInput.tags.join(',')
     : '';
 
-  // 預覽格線
-  const verticalLines = [];
-  for (let i = 1; i < tableInput.width; i++) {
-    verticalLines.push(
-      <div
-        key={`v-${i}`}
-        className="grid-line vertical"
-        style={{ left: `${(i / tableInput.width) * 100}%` }}
-      />
-    );
-  }
-  const horizontalLines = [];
-  for (let j = 1; j < tableInput.height; j++) {
-    horizontalLines.push(
-      <div
-        key={`h-${j}`}
-        className="grid-line horizontal"
-        style={{ top: `${(j / tableInput.height) * 100}%` }}
-      />
-    );
-  }
+  // 預覽元件 (只顯示一次)
+  const Preview = () => {
+    const maxPreviewVmin = 30;
+    const maxDim = Math.max(tableInput.width, tableInput.height);
+    const cellVmin = maxDim > 4 ? maxPreviewVmin / maxDim : 6;
+    const previewWidth = tableInput.width * cellVmin;
+    const previewHeight = tableInput.height * cellVmin;
 
-  // 驗證
+    const verticalLines = [];
+    for (let i = 1; i < tableInput.width; i++) {
+      verticalLines.push(
+        <div
+          key={`v-${i}`}
+          className="grid-line vertical"
+          style={{ left: `${(i / tableInput.width) * 100}%` }}
+        />
+      );
+    }
+    const horizontalLines = [];
+    for (let j = 1; j < tableInput.height; j++) {
+      horizontalLines.push(
+        <div
+          key={`h-${j}`}
+          className="grid-line horizontal"
+          style={{ top: `${(j / tableInput.height) * 100}%` }}
+        />
+      );
+    }
+
+    return (
+      <div className="table-preview-container">
+        <div
+          className="table preview"
+          style={{
+            width:  `${previewWidth}vmin`,
+            height: `${previewHeight}vmin`,
+            position: 'relative'
+          }}
+        >
+          {verticalLines}
+          {horizontalLines}
+          <div className="table-id">{tableInput.name}</div>
+          <div className="table-info">
+            0/{tableInput.capacity}
+            {tableInput.extraSeatLimit > 0 && (
+              <span className="extra">(+{tableInput.extraSeatLimit})</span>
+            )}
+          </div>
+          {Array.isArray(tableInput.tags) && tableInput.tags.length > 0 && (
+            <div className="table-tags">
+              {tableInput.tags.map(tag => (
+                <span key={tag} className="tag">{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // 驗證欄位
   const validCapacity       = Number.isInteger(tableInput.capacity)       && tableInput.capacity >= 0;
   const validWidth          = Number.isInteger(tableInput.width)          && tableInput.width >= 1;
   const validHeight         = Number.isInteger(tableInput.height)         && tableInput.height >= 1;
   const validExtraSeatLimit = Number.isInteger(tableInput.extraSeatLimit) && tableInput.extraSeatLimit >= 0;
   const disabled = !(validCapacity && validWidth && validHeight && validExtraSeatLimit);
 
-  // 共用預覽元件
-  const Preview = () => (
-    <div className="table-preview-container">
-      <div
-        className="table preview"
-        style={{
-          width:  `${tableInput.width  * 6}vmin`,
-          height: `${tableInput.height * 6}vmin`,
-          position: 'relative'
-        }}        
-      >
-        {/* 網格線 */}
-        {verticalLines}
-        {horizontalLines}
-
-        {/* 內容 */}
-        <div className="table-id">{tableInput.name}</div>
-        <div className="table-info">
-          0/{tableInput.capacity}
-          {tableInput.extraSeatLimit > 0 && (
-            <span className="extra">(+{tableInput.extraSeatLimit})</span>
-          )}
-        </div>
-
-        {/* 標籤 */}
-        {Array.isArray(tableInput.tags) && tableInput.tags.length > 0 && (
-          <div className="table-tags">
-            {tableInput.tags.map(tag => (
-              <span key={tag} className="tag">{tag}</span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <div className="modal-backdrop">
       <div className="modal table-form">
         <h3>{title}</h3>
-
+        {/* 分頁欄位 */}
         <div className="pages-container">
           <div className={`pages${advanced ? ' advanced' : ''}`}>  
-            {/* 基本設定面板 */}
+            {/* 基本設定頁 */}
             <div className="page basic-page">
               <label>
                 桌名 (Name):
@@ -142,20 +144,15 @@ export default function TableForm({
                   />
                 </div>
               </label>
-
-              {/* 基本設定預覽 */}
-              <label>預覽 (Preview):</label>
-              <Preview />
             </div>
 
-            {/* 進階設定面板 */}
+            {/* 進階設定頁 */}
             <div className="page advanced-page">
               <label>
                 額外座位上限 (ExtraSeatLimit):
                 <input
                   type="number" step={1} min={0}
                   value={tableInput.extraSeatLimit ?? 0}
-                  placeholder="0"
                   onChange={e => {
                     const v = Math.max(0, Math.floor(+e.target.value));
                     onInputChange('extraSeatLimit', isNaN(v) ? 0 : v);
@@ -183,14 +180,15 @@ export default function TableForm({
                   onChange={e => onInputChange('description', e.target.value)}
                 />
               </label>
-
-              {/* 進階設定預覽也顯示標籤 */}
-              <label>預覽 (Preview):</label>
-              <Preview />
             </div>
           </div>
         </div>
 
+        {/* 固定顯示預覽 */}
+        <Preview />
+
+
+        {/* 切換分頁按鈕 */}
         <div
           className="toggle-advanced"
           onClick={() => setAdvanced(a => !a)}

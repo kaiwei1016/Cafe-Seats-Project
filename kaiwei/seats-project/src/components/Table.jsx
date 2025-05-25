@@ -16,6 +16,7 @@ const Table = ({
   updateTime,
   tags = [],
   mode,
+  hideGridLines = false,
   updateOccupied,
   onEdit,
   deleteTableMode,
@@ -141,7 +142,7 @@ const Table = ({
           ))}
         </div>
 
-        {gridLines()}
+        {!hideGridLines && gridLines()}
       </div>
 
       {mode === 'business' && showControls && !deleteTableMode && (

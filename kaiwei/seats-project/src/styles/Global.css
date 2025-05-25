@@ -1,10 +1,9 @@
 /* Global Styles */
 body {
-    font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+    font-family: '', 'Noto Sans TC', sans-serif;
     display: flex;
     flex-direction: column;      /* 改成垂直排 */
-    align-items: center;         /* 只水平置中 */
-    justify-content: flex-start; /* 垂直靠顶 */
+    align-items: stretch;         /* 只水平置中 */
   }
   .kcafe-container {
     position: relative;

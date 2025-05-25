@@ -107,7 +107,6 @@
     display: flex;
     justify-content: center;
     margin-bottom: 1rem;
-    border: 2px dashed rgb(4, 255, 4);
   }
   .grid-line {
     position: absolute;
@@ -164,3 +163,8 @@
     text-decoration: underline;
   }
   
+  /* 在預覽桌子的外層加上綠色虛線邊框 */
+  .table-preview-container {
+    display: inline-block;       /* 收縮到內容寬度 */
+    border: 2px dashed rgb(4, 255, 4);
+  }

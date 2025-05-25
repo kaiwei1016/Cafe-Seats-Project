@@ -4,6 +4,15 @@
   width: 100vw;
   height: calc(100vw *  16 / 25);
   overflow: hidden;
+  display: block;           /* 預防 image 預設為 inline */
+  margin: 0 auto;           /* 水平置中 */
+  max-width: 1200px;
+  max-height: 768px;
+  border: 2px solid #ccc;              /* 淺灰實線邊框 */
+  border-radius: 20px;                 /* 圓角 */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* 柔和陰影 */
+  padding: 8px;
+  margin-top: 8px;
 }
 
 .bg-image {
@@ -17,6 +26,11 @@
   transition: transform 0.3s ease;
   pointer-events: none;
 }
+
+.bg-white-fill {
+  z-index: 0; /* 確保在最底層 */
+}
+
 .background.show-grid::after {
   content: "";
   position: absolute;

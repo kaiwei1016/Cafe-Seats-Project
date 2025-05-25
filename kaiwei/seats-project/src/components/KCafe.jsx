@@ -1,9 +1,8 @@
-// src/components/KCafe.jsx
 import React, { useState, useEffect } from 'react';
 import Background from './Background';
 import BackgroundForm from './BackgroundForm';
-import Navbar     from './Navbar';
-import TableForm  from './TableForm';
+import Navbar from './Navbar';
+import TableForm from './TableForm';
 import '../styles/Global.css';
 import '../styles/Navbar.css';
 import '../styles/Background.css';
@@ -14,72 +13,46 @@ import '../styles/TableForm.css';
 // Constants & Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Grid unit (percent); must match CSS (8% per cell or adjust accordingly)
 const GRID_UNIT_X = 2;
-const GRID_UNIT_Y   = 3.125;
+const GRID_UNIT_Y = 3.125;
 
-/**
- * Check if two tables overlap on the snap-to grid.
- * a, b: { left, top, width, height } with left/top in percent
- */
 function rectsOverlap(a, b) {
   const dx = Math.abs(a.left - b.left);
-  const dy = Math.abs(a.top  - b.top);
-
-  const aHalfW = a.width  * GRID_UNIT_X;
+  const dy = Math.abs(a.top - b.top);
+  const aHalfW = a.width * GRID_UNIT_X;
   const aHalfH = a.height * GRID_UNIT_Y;
-  const bHalfW = b.width  * GRID_UNIT_X;
+  const bHalfW = b.width * GRID_UNIT_X;
   const bHalfH = b.height * GRID_UNIT_Y;
-
-  // If gap on either axis ≥ sum of half-sizes, no overlap
-  if (dx >= aHalfW + bHalfW || dy >= aHalfH + bHalfH) {
-    return false;
-  }
+  if (dx >= aHalfW + bHalfW || dy >= aHalfH + bHalfH) return false;
   return true;
 }
 
-/** Returns true if any pair in tables[] overlaps */
 function anyOverlap(tables) {
   for (let i = 0; i < tables.length; i++) {
     for (let j = i + 1; j < tables.length; j++) {
-      if (rectsOverlap(tables[i], tables[j])) {
-        return true;
-      }
+      if (rectsOverlap(tables[i], tables[j])) return true;
     }
   }
   return false;
 }
 
-// Initial default tables
 const INITIAL_TABLES = [
-  {
-    table_id: '1F_01',
-    floor: '1F',
-    index: 1,
-    name: 'A',
-    left: 20, top: 20,
-    width: 1, height: 1,
-    capacity: 4,
-    occupied: 2,
-    extraSeatLimit: 0,
-    tags: [],
-    description: '',
-    updateTime: null,
-    available: true
-  },
+  { table_id: '1F_01', floor: '1F', index: 1, name: 'A', left: 20, top: 20,
+    width: 1, height: 1, capacity: 4, occupied: 2, extraSeatLimit: 0,
+    tags: [], description: '', updateTime: null, available: true }
   // ...
 ];
 
 const getCroppedImg = (imageSrc, pixelCrop) =>
   new Promise((resolve, reject) => {
     const image = new Image();
+    image.crossOrigin = 'anonymous';
     image.src = imageSrc;
     image.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = pixelCrop.width;
       canvas.height = pixelCrop.height;
       const ctx = canvas.getContext('2d');
-      // 白底
       ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(
@@ -89,72 +62,81 @@ const getCroppedImg = (imageSrc, pixelCrop) =>
         0, 0, pixelCrop.width, pixelCrop.height
       );
       canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        resolve(url);
+        if (!blob) return reject(new Error('Canvas is empty'));
+        resolve(URL.createObjectURL(blob));
       }, 'image/jpeg');
     };
     image.onerror = reject;
   });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// KCafe Component
-// ─────────────────────────────────────────────────────────────────────────────
-const KCafe = ({ hideMenu = false }) => {
-  
-  const [showBgForm, setShowBgForm] = useState(false);
-  const [bgOffset,   setBgOffset]   = useState({ x:50, y:50 });
-  
-  const [bgImage, setBgImage]         = useState(
-  () => localStorage.getItem('kcafe_bg_img') || ''      // 重新整理仍保留
-  );
-  const [bgCropData, setBgCropData]   = useState(
-    () => JSON.parse(localStorage.getItem('kcafe_bg_crop') || 'null')
-  );
-    const openBgForm   = () => setShowBgForm(true);
-    const cancelBgForm = () => setShowBgForm(false);
-    const saveBgForm = ({ url, crop, zoom }) => {
-      setBgImage(url);
-      setBgCropData(crop);
-      setBgZoom(zoom);
-      localStorage.setItem('kcafe_bg_img',  url);
-      localStorage.setItem('kcafe_bg_crop', JSON.stringify(crop));
-      localStorage.setItem('kcafe_bg_zoom', zoom.toString());
-      setShowBgForm(false);
-  };
-  const [bgZoom, setBgZoom] = useState( () => {
-    const z = localStorage.getItem('kcafe_bg_zoom');
-    return z !== null ? parseFloat(z) : 1;
-  });
-  
-    // 匯入資料的處理函式
-  const handleImportData = async ({
-    bgCrop,
-    bgZoom: importedZoom,
-    tables: newTables
-  }) => {
-    const importedCrop   = bgCrop;
-    const importedTables = newTables;
+const DEFAULT_CROP = { x: 0, y: 0, width: 1000, height: 640 };
+const DEFAULT_ZOOM = 1;
 
-    setBgZoom(importedZoom);
-    localStorage.setItem('kcafe_bg_zoom', importedZoom.toString());
-    // 1. 更新桌子
-    setTables(importedTables);
+const KCafe = ({ hideMenu = false }) => {
+  const [showBgForm, setShowBgForm] = useState(false);
+  const [bgHidden, setBgHidden] = useState(() => {
+   if (!hideMenu) return false;
+   return localStorage.getItem('kcafe_guest_bgHidden') === 'true';
+ });
+  const [gridHidden, setGridHidden] = useState(() => {
+   if (!hideMenu) return false;
+   return localStorage.getItem('kcafe_guest_gridHidden') === 'true';
+ });
+  const [bgOffset] = useState({ x: 50, y: 50 });
+
+  // Background image managed via crop data, not persisted blob URLs
+  const [bgImage, setBgImage] = useState('');
+  const [bgCropData, setBgCropData] = useState(() =>
+    JSON.parse(localStorage.getItem('kcafe_bg_crop') || JSON.stringify(DEFAULT_CROP))
+  );
+  const [bgZoom, setBgZoom] = useState(() => {
+    const z = localStorage.getItem('kcafe_bg_zoom');
+    return z !== null ? parseFloat(z) : DEFAULT_ZOOM;
+  });
+
+  const toggleBgHidden = () =>
+   setBgHidden(prev => {
+     const next = !prev;
+     if (hideMenu) localStorage.setItem('kcafe_guest_bgHidden', next);
+     return next;
+   });
+
+ const toggleGridHidden = () =>
+   setGridHidden(prev => {
+     const next = !prev;
+     if (hideMenu) localStorage.setItem('kcafe_guest_gridHidden', next);
+     return next;
+   });
+
+  // Generate cropped background on mount and when crop changes
+  useEffect(() => {
+    getCroppedImg('/img/KCafe.jpg', bgCropData)
+      .then(url => setBgImage(url))
+      .catch(console.error);
+  }, [bgCropData]);
+
+  // Handlers for background form
+  const openBgForm = () => setShowBgForm(true);
+  const cancelBgForm = () => setShowBgForm(false);
+  const saveBgForm = ({ url, crop, zoom }) => {
+    if (!url) return;
+    setBgCropData(crop);
+    setBgZoom(zoom);
+    localStorage.setItem('kcafe_bg_crop', JSON.stringify(crop));
+    localStorage.setItem('kcafe_bg_zoom', zoom.toString());
+    setShowBgForm(false);
+  };
+
+  // Import data: update tables and background crop/zoom params only
+  const handleImportData = async ({ bgCrop, bgZoom: impZoom, tables: newTables }) => {
+    setBgZoom(impZoom);
+    localStorage.setItem('kcafe_bg_zoom', impZoom.toString());
+    setTables(newTables);
     newTables.forEach(t =>
       localStorage.setItem(`kcafe_table_${t.table_id}`, JSON.stringify(t))
     );
-
-    // 2. 更新背景裁切參數
-    setBgCropData(importedCrop);
-    localStorage.setItem('kcafe_bg_crop', JSON.stringify(importedCrop));
-
-    // 3. 更新 zoom
-    setBgZoom(bgZoom);
-    localStorage.setItem('kcafe_bg_zoom', bgZoom.toString());
-
-    // 4. 重新用原圖裁切出背景
-    const croppedUrl = await getCroppedImg('/img/KCafe.jpg', importedCrop);
-    setBgImage(croppedUrl);
-    localStorage.setItem('kcafe_bg_img', croppedUrl);
+    setBgCropData(bgCrop);
+    localStorage.setItem('kcafe_bg_crop', JSON.stringify(bgCrop));
   };
 
   // ----- State Hooks -----
@@ -249,7 +231,7 @@ const KCafe = ({ hideMenu = false }) => {
   useEffect(() => {
     if (!hideMenu) return;
     setMode('view');
-    const id = setInterval(() => window.location.reload(), 5000);
+    const id = setInterval(() => window.location.reload(), 30000);
     return () => clearInterval(id);
   }, [hideMenu]);
 
@@ -450,11 +432,15 @@ const KCafe = ({ hideMenu = false }) => {
       onMouseUp={handleTableMouseUp}
     >
       <Navbar
-        hideMenu={hideMenu}   // ← new
+        hideMenu={hideMenu}
         mode={mode}
         openBgForm={openBgForm}
         bgCropData={bgCropData}
-        bgZoom={bgZoom}   
+        bgZoom={bgZoom}
+        bgHidden={bgHidden}
+        onToggleBgHidden={toggleBgHidden}
+        gridHidden={gridHidden}
+        onToggleGridHidden={toggleGridHidden}
         onImportData={handleImportData}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
@@ -502,10 +488,12 @@ const KCafe = ({ hideMenu = false }) => {
         updateTableOccupied={updateTableOccupied}
         mode={mode}
         bgOffset={bgOffset}
-        bgImage={bgImage || '/img/KCafe.jpg'} 
+        hideImage={bgHidden}
+        hideGrid={gridHidden}
+        bgImage={bgImage || '/img/KCafe.jpg'}
         handleRotate={rotateLayout}
         rotateCount={rotateCount}
-        handleTableMouseDown={(id,e) => handleTableMouseDown(id, e)}
+        handleTableMouseDown={handleTableMouseDown}
         deleteTableMode={deleteTableMode}
         selectedToDeleteTable={selectedToDeleteTable}
         onSelectDeleteTable={setSelectedToDeleteTable}

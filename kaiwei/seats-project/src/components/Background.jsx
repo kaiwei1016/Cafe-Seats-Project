@@ -15,7 +15,8 @@ const Background = ({
   moveTableMode,
   selectedToMoveTable,
   handleRotate,
-  rotateCount
+  rotateCount,
+  hideImage, hideGrid
 }) => {
 
   const isVertical = rotateCount % 2 !== 0;
@@ -36,19 +37,28 @@ if (!isVertical) {
       <button className="rotate-button" onClick={handleRotate}>
         ⟳
       </button>
-      {/* 背景圖：純粹視覺旋轉 */}
-      <img
-        src={bgImage}
-        alt=""
-        className="bg-image"
-        style={{
-          transform: `rotate(${-rotateCount * 90}deg)`,
-          objectPosition
-        }}
-        draggable={false}
-        onDragStart={e => e.preventDefault()}
-      />
-
+      {hideImage ? (
+        <div
+          className="bg-white-fill"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: '#fff'
+          }}
+        />
+      ) : (
+        <img
+          src={bgImage}
+          alt=""
+          className="bg-image"
+          style={{
+            transform: `rotate(${-rotateCount * 90}deg)`,
+            objectPosition
+          }}
+          draggable={false}
+          onDragStart={e => e.preventDefault()}
+        />
+      )}
       {/* 渲染桌子 */}
       {tables.map(tbl => (
         <Table
@@ -65,6 +75,7 @@ if (!isVertical) {
           updateTime={tbl.updateTime}
           tags={tbl.tags}
           mode={mode}
+          hideGridLines={hideGrid}
           updateOccupied={delta => updateTableOccupied(tbl.table_id, delta)}
           onMouseDown={e => handleTableMouseDown(tbl.table_id, e)}
           deleteTableMode={deleteTableMode}

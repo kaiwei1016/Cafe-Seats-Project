@@ -21,9 +21,25 @@
   }
   
   .topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative; /* 讓左側 dropdown 以此為定位基準 */
+  }
+
+  .topbar-left .left-menu {
+    position: absolute;
+    top: 100%; /* 緊貼 topbar‑left 底部 */
+    left: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0.5rem;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 250;
   }
   
   .topbar-logo {
@@ -180,5 +196,6 @@
   .zoom-slider input {
     margin: 0 0.5rem;
   }
+  
   
   

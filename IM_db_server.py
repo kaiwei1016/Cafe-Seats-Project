@@ -6,7 +6,7 @@ from bson import ObjectId
 from datetime import datetime
 import urllib.parse
 
-app = FastAPI(title="Cafe Seat Management API")
+app = FastAPI(title="Cafe Seat Management API (Updated)")
 
 # MongoDB 連線設定
 username = urllib.parse.quote_plus("user_01")
@@ -21,37 +21,42 @@ collection = db["im_final_project"]
 
 # ======== Pydantic Schemas ========
 class SeatBase(BaseModel):
-    Name: str = Field(..., description="座位名稱，例如 A3")
-    Availability: bool = Field(..., description="座位是否有人")
-    Xpos: float = Field(..., description="X 座標")
-    Ypos: float = Field(..., description="Y 座標")
-    Capacity: Optional[int] = Field(1, ge=1, description="原始座位數")
-    ExtraSeatLimit: Optional[int] = Field(0, ge=0, description="可加座位上限")
-    CurrentOccupancy: Optional[int] = Field(0, ge=0, description="目前佔用人數")
-    Description: Optional[str] = Field("", description="座位備註")
-    StatusUpdateTime: Optional[datetime] = Field(None, description="狀態最後更新時間（ISO 格式）")
-    Floor: Optional[str] = Field("1F", description="樓層")
-    Zone: Optional[str] = Field("", description="區域")
-    SeatType: Optional[str] = Field("單人", description="座位類型")
-    Tags: Optional[List[str]] = Field(default_factory=list, description="標籤")
+    name: str = Field(..., description="座位名稱")
+    left: int = Field(..., description="X 座標")
+    top: float = Field(..., description="Y 座標")
+    available: bool = Field(..., description="是否有人")
+
+    table_id: Optional[str] = Field(None, description="桌子 ID")
+    floor: Optional[str] = Field(None, description="樓層")
+    index: Optional[int] = Field(None, description="排列 index")
+    width: Optional[int] = Field(None, description="寬度")
+    height: Optional[int] = Field(None, description="高度")
+    capacity: Optional[int] = Field(1, ge=1, description="原始座位數")
+    occupied: Optional[int] = Field(0, ge=0, description="已占位人數")
+    extraSeatLimit: Optional[int] = Field(0, ge=0, description="可額外增加座位")
+    tags: Optional[str] = Field("", description="標籤")
+    description: Optional[str] = Field("", description="備註")
+    updateTime: Optional[datetime] = Field(None, description="更新時間")
 
     class Config:
         extra = "forbid"
 
 class SeatUpdate(BaseModel):
-    Name: Optional[str]
-    Availability: Optional[bool]
-    Xpos: Optional[float]
-    Ypos: Optional[float]
-    Capacity: Optional[int]
-    ExtraSeatLimit: Optional[int]
-    CurrentOccupancy: Optional[int]
-    Description: Optional[str]
-    StatusUpdateTime: Optional[datetime]
-    Floor: Optional[str]
-    Zone: Optional[str]
-    SeatType: Optional[str]
-    Tags: Optional[List[str]]
+    name: Optional[str]
+    left: Optional[int]
+    top: Optional[float]
+    available: Optional[bool]
+    table_id: Optional[str]
+    floor: Optional[str]
+    index: Optional[int]
+    width: Optional[int]
+    height: Optional[int]
+    capacity: Optional[int]
+    occupied: Optional[int]
+    extraSeatLimit: Optional[int]
+    tags: Optional[str]
+    description: Optional[str]
+    updateTime: Optional[datetime]
 
     class Config:
         extra = "forbid"
@@ -59,27 +64,25 @@ class SeatUpdate(BaseModel):
 class SeatResponse(SeatBase):
     id: str
 
-class SeatStatusPatch(BaseModel):
-    Availability: bool
-    CurrentOccupancy: int
-
 # ======== Helper Function ========
 def format_seat(seat: dict) -> dict:
     return {
         "id": str(seat.get("_id")),
-        "Name": seat.get("Name"),
-        "Availability": seat.get("Availability"),
-        "Xpos": seat.get("Xpos"),
-        "Ypos": seat.get("Ypos"),
-        "Capacity": seat.get("Capacity", 1),
-        "ExtraSeatLimit": seat.get("ExtraSeatLimit", 0),
-        "CurrentOccupancy": seat.get("CurrentOccupancy", 0),
-        "Description": seat.get("Description", ""),
-        "StatusUpdateTime": seat.get("StatusUpdateTime"),
-        "Floor": seat.get("Floor", "1F"),
-        "Zone": seat.get("Zone", ""),
-        "SeatType": seat.get("SeatType", "單人"),
-        "Tags": seat.get("Tags", [])
+        "name": seat.get("name"),
+        "left": seat.get("left"),
+        "top": seat.get("top"),
+        "available": seat.get("available"),
+        "table_id": seat.get("table_id"),
+        "floor": seat.get("floor"),
+        "index": seat.get("index"),
+        "width": seat.get("width"),
+        "height": seat.get("height"),
+        "capacity": seat.get("capacity", 1),
+        "occupied": seat.get("occupied", 0),
+        "extraSeatLimit": seat.get("extraSeatLimit", 0),
+        "tags": seat.get("tags", ""),
+        "description": seat.get("description", ""),
+        "updateTime": seat.get("updateTime"),
     }
 
 # ======== Routes ========
@@ -103,22 +106,9 @@ def update_seat(seat_id: str, seat: SeatUpdate):
     updated = collection.find_one({"_id": ObjectId(seat_id)})
     return format_seat(updated)
 
-@app.patch("/seats/name/{seat_name}/status", response_model=SeatResponse)
-def update_seat_status(seat_name: str, status: SeatStatusPatch):
-    update_data = {
-        "Availability": status.Availability,
-        "CurrentOccupancy": status.CurrentOccupancy,
-        "StatusUpdateTime": datetime.now()
-    }
-    result = collection.update_one({"Name": seat_name}, {"$set": update_data})
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Seat Name not found")
-    updated = collection.find_one({"Name": seat_name})
-    return format_seat(updated)
-
 @app.delete("/seats/name/{seat_name}")
 def delete_seat(seat_name: str):
-    result = collection.delete_one({"Name": seat_name})
+    result = collection.delete_one({"name": seat_name})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail=f"Seat '{seat_name}' not found")
     return {"message": f"Seat '{seat_name}' deleted successfully"}

@@ -1,0 +1,180 @@
+/* TableList.css */
+
+/* Container and heading */
+.table-list {
+    padding: 16px;
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: sans-serif;
+  }
+  
+  .table-list h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+  }
+  
+  /* 兩欄式列表 */
+  .table-list ul {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  
+  /* 每個項目 50% 寬度，底部分隔線 */
+  .table-list .table-item {
+    box-sizing: border-box;
+    display: flex;
+    justify-content:flex-start;
+    width: 50%;
+    padding: 25px 25px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    gap: 10px;
+  }
+
+  
+  .table-list .table-icon {
+    width: 32px;
+    height: 32px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    color: #888;
+    font-size: 1.2rem;
+  }
+  
+  .table-list .table-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #222;
+    margin-right: 8px;
+  }
+  
+  .table-list .table-status {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .table-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .info-top .info-bottom{
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .info-top {
+    display:flex; 
+  }
+
+    .info-bottom {
+    display: flex;         /* 啟用 flex */
+    flex-direction: column;
+    justify-content: flex-start;  /* 主軸(預設 row→水平)左對齊 */
+    align-items: flex-start;
+    gap: 5px;             /* 子項之間 12px */
+    font-size: 12px;
+    }
+
+  .last-updated {
+    font-size: 12px;
+  }
+
+  .table-tags {
+    gap: 5px;
+    margin-left: 0px;
+  }
+
+  .table-tags .tag {
+    font-size: 10px;  /* e.g. 14px，但用 rem 更容易響應式 */
+  }
+  
+  /* 狀態顏色 */
+  .table-list .table-status.available {
+    color: #4caf50; /* 綠 */
+  }
+  .table-list .table-status.in-use {
+    color: #ffb300; /* 黃 */
+  }
+  .table-list .table-status.occupied {
+    color: #f44336; /* 紅 */
+  }
+  
+  .table-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    /* 最基本的背景色：淡灰 */
+    background-color: #f5f5f5;
+    transition: box-shadow 0.2s ease;
+  }
+  
+  /* 三種狀態的光暈顏色 */
+  .table-icon.full {
+    /* 飽和：紅光 */
+    box-shadow: 0 0 8px rgba(244, 67, 54, 0.8);
+  }
+  .table-icon.partial {
+    /* 部分：黃光 */
+    box-shadow: 0 0 8px rgba(255, 179, 0, 0.8);
+  }
+  .table-icon.empty {
+    /* 空桌：綠光 */
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.8);
+  }
+
+  /* 讓整個 table-item 左右排，並置中 */
+.table-list .table-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  /* 把 icon + info 包成一塊 */
+  .table-list .table-content {
+    display: flex;
+    align-items: center;
+    flex: 1;              /* 撐滿剩餘空間，讓按鈕靠右 */
+    gap: 0.75rem;
+  }
+  
+  /* 編輯按鈕 */
+  .table-edit-btn {
+    flex-shrink: 0;
+    background: #0077cc;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+  .table-edit-btn:hover {
+    background: #005fa3;
+  }
+  
+
+  /* Responsive: single column on small screens */
+@media (max-width: 600px) {
+  .table-list ul {
+    display: block;
+  }
+  .table-list .table-item {
+    width: 100%;
+  }
+}
+

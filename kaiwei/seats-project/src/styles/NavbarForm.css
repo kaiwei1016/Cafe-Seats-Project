@@ -1,0 +1,105 @@
+/* ── Logo Preview ── */
+.logo-preview {
+    display: block;
+    margin: 0 auto;
+    max-width: 200px;
+    max-height: 200px;
+    width: auto;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    object-fit: contain;
+  }
+  
+  
+  /* ── Logo Button Group ── */
+  .logo-button-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .logo-button-group .btn {
+    min-width: 100px;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .logo-button-group .btn-primary {
+    background-color: #007bff;
+    color: #fff;
+  }
+  
+  .logo-button-group .btn-primary:hover {
+    background-color: #0056b3;
+  }
+  
+  .logo-button-group .btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+  }
+  
+  .logo-button-group .btn-secondary:hover {
+    background-color: #5a6268;
+  }
+  
+  
+  /* ── Cropper Container ── */
+  .cropper-container {
+    max-width: 400px;
+    width: 90%;
+    margin: 1.5rem auto;
+    position: relative;
+  }
+  
+  .cropper-container img,
+  .cropper-container canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+  
+  
+  /* ── Cropper Actions (Confirm / Cancel) ── */
+  .cropper-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .cropper-actions .btn-confirm,
+  .cropper-actions .btn-cancel {
+    min-width: 80px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .cropper-actions .btn-confirm {
+    background-color: #007bff;
+    color: #fff;
+  }
+  
+  .cropper-actions .btn-confirm:hover {
+    background-color: #0056b3;
+  }
+  
+  .cropper-actions .btn-cancel {
+    background-color: #6c757d;
+    color: #fff;
+  }
+  
+  .cropper-actions .btn-cancel:hover {
+    background-color: #5a6268;
+  }
+  
+  

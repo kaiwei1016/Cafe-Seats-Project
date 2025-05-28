@@ -2,28 +2,38 @@
 import React, { useState, useRef, useEffect } from 'react';
 import '../styles/Table.css';
 
-
 const Table = ({
   tableId,
   name,
+  index,
+  seatIndexShown,
   left,
   top,
-  capacity,
-  occupied,
+
   width = 1,
   height = 1,
-  extraSeatLimit = 0,
-  updateTime,
-  tags = [],
-  mode,
-  unitX = 4, 
+  unitX = 4,
   unitY = 6.25,
+
+  capacity,
+  extraSeatLimit = 0,
+  occupied,
+  updateTime,
+  available = true,
+
+  tags = [],
+
+  mode,
   hideGridLines = false,
+
   updateOccupied,
   onEdit,
+
   deleteTableMode,
-  selectedToDeleteTable,
+  selectedToDeleteList,
   onSelectDeleteTable,
+  onToggleDeletePick,
+
   moveTableMode,
   selectedToMoveTable,
   onMouseDown
@@ -31,14 +41,14 @@ const Table = ({
   const [showControls, setShowControls] = useState(false);
   const containerRef = useRef(null);
 
-  // Derived flags
+  const isSeat       = !!tableId && (tableId[0] === 's' || tableId[0] === 'S');
   const maxOccupancy = capacity + extraSeatLimit;
-  const isFull       = occupied >= maxOccupancy;
-  const isPartial    = occupied > 0 && occupied < maxOccupancy;
+  const isEmptyZero  = capacity === 0 && occupied === 0;
+  const isFull       = !isEmptyZero && occupied >= maxOccupancy;
+  const isPartial    = !isEmptyZero && occupied > 0 && occupied < maxOccupancy;
   const isMoving     = moveTableMode && selectedToMoveTable === tableId;
-  const isDeleting   = deleteTableMode && selectedToDeleteTable === tableId;
+  const isDeleting = deleteTableMode && selectedToDeleteList.includes(tableId);
 
-  // Format ISO timestamp to “X 分鐘前 / 小時前 / 天前”
   const formatRelative = iso => {
     if (!iso) return '';
     const diff = Date.now() - new Date(iso).getTime();
@@ -48,19 +58,24 @@ const Table = ({
     return `${Math.floor(diff / 86_400_000)}天`;
   };
 
-  // Toggle business‐mode +/- controls
   const handleClick = e => {
     e.stopPropagation();
+
     if (deleteTableMode) {
-      onSelectDeleteTable();
-    } else if (mode === 'business') {
-      setShowControls(v => !v);
-    } else if (mode === 'edit' && !deleteTableMode && !moveTableMode) {
+      onToggleDeletePick(tableId);   
+      return;
+    }
+
+    if (mode === 'business') {
+      if (!isSeat) setShowControls(v => !v);
+      return;
+    }
+
+    if (mode === 'edit' && !deleteTableMode && !moveTableMode && !isSeat) {
       onEdit();
     }
   };
 
-  // Close controls when clicking outside
   useEffect(() => {
     const onOutside = e => {
       if (
@@ -71,38 +86,36 @@ const Table = ({
         setShowControls(false);
       }
     };
-    document.addEventListener('mousedown', onOutside);
+    if (showControls) document.addEventListener('mousedown', onOutside);
     return () => document.removeEventListener('mousedown', onOutside);
   }, [showControls]);
 
-  // Inline styles for positioning & sizing
   const containerStyle = {
     left:   `${left}%`,
     top:    `${top}%`,
     width:  `${width  * unitX}%`,
-    height: `${height * unitY}%`,
+    height: `${height * unitY}%`
   };
 
   const tableStyle = {
-    width:  '100%',
+    width: '100%',
     height: '100%'
   };
 
-  // Render grid‐lines inside the table
   const gridLines = () => (
     <>
       {Array.from({ length: width - 1 }).map((_, i) => (
         <div
           key={`v${i}`}
           className="grid-line vertical"
-          style={{ left: `${((i+1) / width) * 100}%` }}
+          style={{ left: `${((i + 1) / width) * 100}%` }}
         />
       ))}
       {Array.from({ length: height - 1 }).map((_, i) => (
         <div
           key={`h${i}`}
           className="grid-line horizontal"
-          style={{ top: `${((i+1) / height) * 100}%` }}
+          style={{ top: `${((i + 1) / height) * 100}%` }}
         />
       ))}
     </>
@@ -113,6 +126,7 @@ const Table = ({
       ref={containerRef}
       className={`
         table-container
+        ${isSeat ? 'seat-container' : ''}
         ${isDeleting ? 'selected-delete' : ''}
         ${isMoving   ? 'selected-move'   : ''}
       `}
@@ -121,30 +135,46 @@ const Table = ({
       onMouseDown={onMouseDown}
     >
       <div
-        className={`table ${isFull ? 'full' : ''} ${isPartial ? 'partial' : ''}`}
+        className={`
+          table
+          ${isSeat ? 'seat' : ''}
+          ${isFull ? 'full' : ''}
+          ${isPartial ? 'partial' : ''}
+        `}
         style={tableStyle}
       >
-        <div className="table-id">{name}</div>
-        <div className="table-info">
-          {occupied}/{capacity}
-          {extraSeatLimit > 0 && <span className="extra">(+{extraSeatLimit})</span>}
-          {updateTime && (
-            <div className="last-updated">
-              約{formatRelative(updateTime)}前
-            </div>
-          )}
-        </div>
-
-        <div className="table-tags">
-          {tags.map(tag => (
-            <span key={tag} className="tag">{tag}</span>
-          ))}
-        </div>
-
-        {!hideGridLines && gridLines()}
+        {isSeat && seatIndexShown && (
+          <div className="seat-index">{index}</div>
+        )}
+        {available && (
+          <>
+            <div className="table-id">{name}</div>
+            {!isSeat && (
+              <div className="table-info">
+                {occupied}/{capacity}
+                {extraSeatLimit > 0 && (
+                  <span className="extra">(+{extraSeatLimit})</span>
+                )}
+                {width >= 2 && height >= 2 && updateTime && (
+                  <div className="last-updated">
+                    {formatRelative(updateTime)}前
+                  </div>
+                )}
+                {width >= 3 && height >= 3 && tags.length > 0 && (
+                  <div className="table-tags">
+                    {tags.map(tag => (
+                      <span key={tag} className="tag">{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+        {!hideGridLines && !isSeat && gridLines()}
       </div>
 
-      {mode === 'business' && showControls && !deleteTableMode && (
+      {mode === 'business' && showControls && available && !deleteTableMode && !isSeat && (
         <div className="table-controls">
           <button
             onClick={e => { e.stopPropagation(); updateOccupied(-1); }}
@@ -157,7 +187,7 @@ const Table = ({
         </div>
       )}
 
-      {mode === 'edit' && !deleteTableMode && !moveTableMode && (
+      {mode === 'edit' && !deleteTableMode && !moveTableMode && !isSeat && (
         <button
           className="edit-table-button"
           onClick={e => { e.stopPropagation(); onEdit(); }}

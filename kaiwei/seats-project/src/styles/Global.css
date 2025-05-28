@@ -6,25 +6,58 @@ body {
     align-items: stretch;         /* 只水平置中 */
   }
 
+html, body {
+  overflow-x: hidden;
+}
+
+h1 {
+    font-size: 2.5rem;
+  }
+
+h2 {
+    font-size: 1rem;
+  }
+
   .kcafe-container {
     position: relative;
     text-align: center;
-    
   }
-  .kcafe-container > h1 {
-    font-size: 2.5rem;
-  }
-  .kcafe-container > h2 {
-    font-size: 1.1rem;
-  }
+
   .remaining {
     color: red;
   }
 
   .main-content {
-  padding: 0px;         /* 與視窗邊緣保持 8px 空隙 */
   box-sizing: border-box; /* 讓 padding 不影響百分比寬高計算 */
 }
 
+.menu-placeholder {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
 
-  
+.menu-carousel {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.menu-carousel .image-container {
+  width: 180px;             /* 依需求調整寬度 */
+  aspect-ratio: 9 / 16;     /* 強制 9:16 */
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.menu-carousel .nav {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.menu-carousel .nav:hover {
+  color: #1976d2;
+}

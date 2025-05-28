@@ -2,7 +2,11 @@
    Navbar Wrapper
    ========================================================================== */
    .navbar-wrapper {
-    width: 100%;
+    position: relative;        /* 保留在文档流，但可偏移 */
+    width: 100vw;              /* 视口宽度的 100% */
+    left: 50%;                 /* 移到视口正中 */
+    margin-left: -50vw;        /* 再向左偏回去一半视口宽 */
+    box-sizing: border-box;    /* 确保 padding 不会撑出宽度 */
   }
   
   /* ==========================================================================
@@ -25,6 +29,9 @@
   align-items: center;
   gap: 0.5rem;
   position: relative; /* 讓左側 dropdown 以此為定位基準 */
+    /* 让左侧占满剩余空间，右侧按钮才不会挤出 */
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .topbar-left .left-menu {
@@ -54,6 +61,12 @@
     font-size: 1.25rem;
     font-weight: bold;
     white-space: nowrap;
+    flex: 1 1 0;        /* 可伸缩、优先被压缩 */
+    min-width: 0;       /* 允许宽度收缩到 0 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
   }
   
   .topbar-right {
@@ -95,6 +108,7 @@
      ========================================================================== */
   .menu-container {
     position: relative;
+
   }
   
   .menu-container .menu-dropdown {
@@ -118,7 +132,7 @@
   
   /* QR code options inside dropdown */
   .menu-container .qr-options {
-    margin-top: 0.5rem;
+
     display: flex;
     gap: 0.5rem;
   }
@@ -134,6 +148,20 @@
     opacity: 0.4;
     cursor: not-allowed;
   }
+
+  /* 让所有 menu-section 的子项垂直排列 */
+  .menu-dropdown .menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;          /* 每个按钮间隔 8px，可按需调整 */
+  }
+
+  /* 如果你想让按钮撑满宽度 */
+  .menu-dropdown .menu-section > button {
+    width: 100%;
+    text-align: center;
+  }
+
   
   /* ==========================================================================
      BottomBar (original Navbar contents)
@@ -155,7 +183,7 @@
   .bottombar .mode-display {
     font-size: 1rem;
   }
-  
+
   /* Shared button styles */
   .bottombar button {
     padding: 5px 15px;
@@ -188,7 +216,15 @@
     background-color: #005fa3;
   }
 
-  
+  .business-tabs {
+    display: flex;
+    gap: 1rem;       /* 按钮之间水平间隔 12px */
+    /* optional: 居中对齐 */
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0;
+  }
+
   .zoom-slider {
     display: inline-flex;
     align-items: center;
@@ -198,5 +234,50 @@
     margin: 0 0.5rem;
   }
   
+  /* ==========================================================================
+   Observation Mode Tabs (固定於底部，手機優化)
+   ========================================================================== */
+   .view-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;     /* 垂直置中 */
+    width: 100%;
+    height: 70px;            /* 鎖定高度 */
+    background: #fff;
+    border-top: 1px solid #ddd;
+    padding: 0;               /* 取消原本的上下 padding */
+    z-index: 150;
+  }
   
+  .view-tabs button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* 水平＋垂直都置中 */
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    height: 100%;             /* 滿版撐滿 55px */
+  }
+  
+  .view-tabs button .icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+  
+  .view-tabs button .label {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+  
+  .view-tabs button.active .icon,
+  .view-tabs button.active .label {
+    color: #0077cc;
+  }
+
   

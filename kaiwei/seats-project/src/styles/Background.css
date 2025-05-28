@@ -11,8 +11,7 @@
   border: 2px solid #ccc;              /* 淺灰實線邊框 */
   border-radius: 20px;                 /* 圓角 */
   box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* 柔和陰影 */
-  padding: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .bg-image {
@@ -64,16 +63,16 @@
 .background.horizontal {
   width: 100vw;
   height: calc(100vw * 16 / 25);
-  max-width: 1200px;
-  max-height: 768px;
+  max-width: 1000px;
+  max-height: 640px;
 }
 
 /* -------- 直向 25:16（旋轉 90° / 270°）--------- */
 .background.vertical {
   width: 100vw;
   height: calc(100vw * 25 / 16);
-  max-width: 768px;          /* ⬅︎ 寬度上限 768 */
-  max-height: 1200px;        /* ⬅︎ 高度上限 1200 */
+  max-width: 640px;
+  max-height: 1000px;
 }
 
 /* -------- 網格比例對調 -------- */

@@ -1,162 +1,191 @@
 /* Table Container & Elements */
 .table-container {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    z-index: 2;
-  }
-  .table-container.pending {
-    opacity: 0.9;
-    border: 0.3vmin dashed rgb(4, 255, 4);
-    box-sizing: border-box;
-  }
-  .table-container.selected-delete {
-    opacity: 0.8;
-  }
-  .table-container.selected-delete .table {
-    box-shadow: 0 0 0.4vmin 0.4vmin rgba(255,0,0,0.8);
-  }
-  .table-container.selected-move .table {
-    box-shadow: 0 0 0.4vmin 0.4vmin rgba(0,0,255,0.8);
-  }
-  .table-container:hover {
-    transform: translate(-50%, -50%) scale(1.02);
-  }
-  .table-container,
-  .table-container .table {
-    user-select: none;
-    cursor: pointer;
-  }
-  .table {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background-color: #fff;
-    border: 0.4vmin solid #666;
-    border-radius: 1vmin;
-  }
-  .table.full {
-    background-color: #f88;
-  }
-  .table.partial {
-    background-color: #ffeb3b;
-  }
-  .table-id {
-    font-weight: bold;
-    font-size: 2vmin;
-    margin-bottom: -5px;
-  }
-  .table-info {
-    font-size: 1.5vmin;
-    margin-bottom: -4px;
-  }
-  .table-info .extra {
-    margin-left: 1px;
-    font-size: 1vmin;
-  }
-  .last-updated {
-    font-size: 1.5vmin;
-    color: #666;
-    white-space: nowrap;
-  }
-  .table-tags {
-    margin-top: 4px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2px;
-  }
-  .tag {
-    background: #eef;
-    border-radius: 3px;
-    padding: 2px 4px;
-    font-size: 10px;
-  }
-  .table-controls {
-    position: absolute;
-    left: 50%;
-    z-index: 100;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 2vmin;
-    padding: 4px 8px;
-  }
-  .table-controls button {
-    width: 4vmin;
-    height: 4vmin;
-    font-size: 2.5vmin;
-    padding: 0;
-    cursor: pointer;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  }
-  .table-controls button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-  .edit-table-button {
-    position: absolute;
-    bottom: -3vmin;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.5vmin;
-    padding: 0.5vmin 1vmin;
-    border: 1px solid #666;
-    background: #fff;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-  .table-container:hover .edit-table-button {
-    background: #eee;
-  }
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 2;
+}
+.table-container.pending {
+  opacity: 0.9;
+  border: 0.3vmin dashed rgb(4, 255, 4);
+  box-sizing: border-box;
+}
+.table-container.selected-delete {
+  opacity: 0.8;
+}
+.table-container.selected-delete .table {
+  box-shadow: 0 0 0.4vmin 0.4vmin rgba(255,0,0,0.8);
+}
+.table-container.selected-move .table {
+  box-shadow: 0 0 0.4vmin 0.4vmin rgba(0,0,255,0.8);
+}
+.table-container:hover {
+  transform: translate(-50%, -50%) scale(1.02);
+}
+.table-container,
+.table-container .table {
+  user-select: none;
+  cursor: pointer;
+}
+.table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border: 0.4vmin solid #666;
+  border-radius: 1vmin;
+}
+.table.full {
+  background-color: #f88;
+}
+.table.partial {
+  background-color: #ffeb3b;
+}
+.table-id {
+  font-weight: bold;
+  font-size: 2vmin;
+  margin-bottom: -5px;
+}
+.table-info {
+  font-size: 1.5vmin;
+  margin-bottom: -4px;
+}
+.table-info .extra {
+  margin-left: 1px;
+  font-size: 1vmin;
+}
+.last-updated {
+  font-size: 1.5vmin;
+  color: #666;
+  white-space: nowrap;
+}
+.table-tags {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+}
+.tag {
+  background: #eef;
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 10px;
+}
+.table-controls {
+  position: absolute;
+  left: 50%;
+  z-index: 100;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2vmin;
+  padding: 4px 8px;
+}
+.table-controls button {
+  width: 4vmin;
+  height: 4vmin;
+  font-size: 2.5vmin;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.table-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.edit-table-button {
+  position: absolute;
+  bottom: -3vmin;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5vmin;
+  padding: 0.5vmin 1vmin;
+  border: 1px solid #666;
+  background: #fff;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.table-container:hover .edit-table-button {
+  background: #eee;
+}
 
-  /* 客滿：紅色光暈 */
+/* 客滿：紅色光暈 */
 @keyframes table-glow {
-    0%, 100% {
-      box-shadow: 0 0 8px 2px rgba(255,136,136,0.6);
-    }
-    50% {
-      box-shadow: 0 0 16px 8px rgba(255,136,136,0.4);
-    }
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(255,136,136,0.6);
   }
-  
-  /* 部分佔用：黃色光暈 */
-  @keyframes partial-glow {
-    0%, 100% {
-      box-shadow: 0 0 8px 2px rgba(255,235,59,0.6);
-    }
-    50% {
-      box-shadow: 0 0 16px 8px rgba(255,235,59,0.4);
-    }
+  50% {
+    box-shadow: 0 0 16px 8px rgba(255,136,136,0.4);
   }
-  
-  /* 把動畫套到對應狀態上 */
-  .table.full {
-    animation: table-glow 2s infinite ease-in-out alternate;
-  }
-  
-  .table.partial {
-    animation: partial-glow 2s infinite ease-in-out alternate;
-  }
+}
 
-  /* override glow when selected-delete */
+/* 部分佔用：黃色光暈 */
+@keyframes partial-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(255,235,59,0.6);
+  }
+  50% {
+    box-shadow: 0 0 16px 8px rgba(255,235,59,0.4);
+  }
+}
+
+/* 把動畫套到對應狀態上 */
+.table.full {
+  animation: table-glow 2s infinite ease-in-out alternate;
+}
+
+.table.partial {
+  animation: partial-glow 2s infinite ease-in-out alternate;
+}
+
+/* override glow when selected-delete */
 .table-container.selected-delete .table,
 .table-container.selected-delete .table.full,
 .table-container.selected-delete .table.partial {
-  animation: none !important;          /* 關閉原本的散光動畫 */
-  box-shadow: 0 0 0.4vmin 0.4vmin rgba(255,0,0,0.8) !important; /* 紅框 */
+animation: none !important;          /* 關閉原本的散光動畫 */
+box-shadow: 0 0 0.4vmin 0.4vmin rgba(255,0,0,0.8) !important; /* 紅框 */
 }
 
 /* override glow when selected-move */
 .table-container.selected-move .table,
 .table-container.selected-move .table.full,
 .table-container.selected-move .table.partial {
-  animation: none !important;          /* 關閉原本的散光動畫 */
-  box-shadow: 0 0 0.4vmin 0.4vmin rgba(0,0,255,0.8) !important; /* 藍框 */
+animation: none !important;          /* 關閉原本的散光動畫 */
+box-shadow: 0 0 0.4vmin 0.4vmin rgba(0,0,255,0.8) !important; /* 藍框 */
 }
 
-  
+/* 追加圓形座位樣式 */
+.table.seat {
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.85rem;
+  border: 0.4vmin solid #666;
+  background: #ccc;
+  user-select: none;
+}
+
+.seat-container.selected-move {
+  outline: 2px dashed #2196f3;
+}
+
+.seat-container.selected-delete {
+  outline: 2px dashed #f44336;
+}
+
+/* 圓形椅子中數字 */
+.seat-index{
+  font-size:0.85rem;
+  font-weight:600;
+  color:#333;
+  text-align:center;
+  width:100%;
+  line-height:100%;
+  pointer-events:none;
+}

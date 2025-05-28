@@ -77,6 +77,7 @@ export default function Background({
           hideGridLines={hideGrid}
           updateOccupied={delta => updateTableOccupied(tbl.table_id, delta)}
           onMouseDown={e => handleTableMouseDown(tbl.table_id, e)}
+          onTouchStart={e => handleTableMouseDown(tbl.table_id, e)}
           deleteTableMode={deleteTableMode}
           selectedToDeleteList={selectedToDeleteList}
           onToggleDeletePick={onToggleDeletePick} 
@@ -98,6 +99,7 @@ export default function Background({
               height: `${pendingTable.height * unitY}%`
             }}
             onMouseDown={e => handleTableMouseDown(pendingTable.table_id, e)}
+            onTouchStart={e => handleTableMouseDown(pendingTable.table_id, e)}
           >
             <div
               className={`table pending ${isSeat ? 'seat' : ''}`}

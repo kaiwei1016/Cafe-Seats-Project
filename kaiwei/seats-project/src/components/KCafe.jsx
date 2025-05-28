@@ -13,6 +13,10 @@ import '../styles/TableList.css'
 
 const GRID_UNIT_X = 2;
 const GRID_UNIT_Y = 3.125;
+const getPoint = e =>
+  e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+            : { x: e.clientX,           y: e.clientY };
+
 
 function rectsOverlap(a, b) {
   const dx = Math.abs(a.left - b.left);
@@ -339,22 +343,24 @@ const KCafe = ({ hideMenu = false }) => {
   };
 
   // ----- Drag Handlers -----
-  const handleTableMouseDown = (tableId, e) => {
+  const handleTablePointerDown = (tableId, e) => {
     if (mode !== 'edit') return;
     const isPend = pendingTable?.table_id === tableId;
     if (!isPend && !moveTableMode) return;
     e.preventDefault();
     const rect = e.target.getBoundingClientRect();
-    setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const { x, y } = getPoint(e);
+    setOffset({ x: x - rect.left, y: y - rect.top });
     setDraggingTable(tableId);
     if (moveTableMode && !isPend) setSelectedToMoveTable(tableId);
   };
 
-  const handleTableMouseMove = e => {
+  const handleTablePointerMove = e => {
     if (draggingTable == null || mode !== 'edit') return;
     const bg = document.querySelector('.background').getBoundingClientRect();
-    const rawX = ((e.clientX - bg.left - offset.x) / bg.width)  * 100;
-    const rawY = ((e.clientY - bg.top  - offset.y) / bg.height) * 100;
+    const { x: cx, y: cy } = getPoint(e);
+    const rawX = ((cx - bg.left - offset.x) / bg.width)  * 100;
+    const rawY = ((cy - bg.top  - offset.y) / bg.height) * 100;
     const snapX = Math.round(rawX / GRID_UNIT_X) * GRID_UNIT_X;
     const snapY = Math.round(rawY / GRID_UNIT_Y) * GRID_UNIT_Y;
     const clamped = pct => Math.max(0, Math.min(100, pct));
@@ -377,7 +383,7 @@ const KCafe = ({ hideMenu = false }) => {
     }
   };
 
-  const handleTableMouseUp = () => setDraggingTable(null);
+  const handleTablePointerUp = () => setDraggingTable(null);
 
   // ----- Add Table Flow -----
   const openAddSeat = () => {
@@ -529,8 +535,10 @@ const KCafe = ({ hideMenu = false }) => {
   return (
     <div
       className="kcafe-container"
-      onMouseMove={handleTableMouseMove}
-      onMouseUp={handleTableMouseUp}
+      onMouseMove={handleTablePointerMove}
+      onTouchMove={handleTablePointerMove}
+      onMouseUp={handleTablePointerUp}
+      onTouchEnd={handleTablePointerUp}
     >
   
       <Navbar
@@ -619,7 +627,7 @@ const KCafe = ({ hideMenu = false }) => {
             handleRotate={rotateLayout}
             rotateCount={rotateCount}
   
-            handleTableMouseDown={handleTableMouseDown}
+            handleTableMouseDown={handleTablePointerDown}
   
             deleteTableMode={deleteTableMode}
             selectedToDeleteList={selectedToDeleteList}

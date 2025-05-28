@@ -133,6 +133,7 @@ const Table = ({
       style={containerStyle}
       onClick={handleClick}
       onMouseDown={onMouseDown}
+      onTouchStart={onMouseDown}
     >
       <div
         className={`

@@ -102,3 +102,7 @@ h2 {
   color: #666;
 }
 
+/* 保留 70px 給觀察模式的底部按鈕列 */
+.kcafe-container {
+  padding-bottom: 70px;
+}

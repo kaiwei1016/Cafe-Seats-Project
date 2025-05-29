@@ -112,16 +112,15 @@ const rotateImage = (src, angle) =>
     img.onerror = reject;
   });
 
-let menuImages = [];
-try {
-  const ctx = require.context('../assets/menu', false, /\.(png|jpe?g|svg|webp)$/);
-  menuImages = ctx.keys().map(ctx);
-} catch (err) {
-  console.warn('No menu images found (or bad path):', err);
-}
+const modules = import.meta.glob(
+  '../assets/menu/*.{png,jpg,jpeg,svg,webp}', 
+  { eager: true,  /* 立刻載入 */ 
+    as: 'url'     /* 直接回傳檔案 URL */ }
+);
+const menuImages = Object.values(modules);
 
-const DEFAULT_CROP = { x: 0, y: 0, width: 1000, height: 640 };
-const DEFAULT_ZOOM = 1;
+const DEFAULT_CROP = { x: 408, y: 146, width: 1105, height: 707 };
+const DEFAULT_ZOOM = 1.411;
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,15 +136,33 @@ const KCafe = ({ hideMenu = false }) => {
   const [rotateCount, setRotateCount] = useState(hideMenu ? 1 : 0);
   const [showBgForm,  setShowBgForm]  = useState(false);
 
-  const [bgHidden, setBgHidden] = useState(() => {
-    if (!hideMenu) return false;
-    return localStorage.getItem('kcafe_guest_bgHidden') === 'true';
+  const [defaultBgHidden, setDefaultBgHidden] = useState(() => {
+   const stored = localStorage.getItem('kcafe_guest_bgHidden');
+   return stored !== null
+     ? JSON.parse(stored)
+     : false;
   });
 
-  const [gridHidden, setGridHidden] = useState(() => {
-    if (!hideMenu) return false;
-    return localStorage.getItem('kcafe_guest_gridHidden') === 'true';
+  const [defaultGridHidden, setDefaultGridHidden] = useState(() => {
+    const stored = localStorage.getItem('kcafe_guest_gridHidden');
+    return stored !== null
+      ? JSON.parse(stored)
+      : false;
+    });
+
+  const [defaultSeatIndex, setDefaultSeatIndex] = useState(() => {
+    const stored = localStorage.getItem('kcafe_guest_seatIndex');
+    return stored !== null
+      ? JSON.parse(stored)
+      : true;
   });
+
+  const [viewBgHidden,        setViewBgHidden]        = useState(defaultBgHidden);
+  const [viewGridHidden,      setViewGridHidden]      = useState(defaultGridHidden);
+  const [viewSeatIndexShown,  setViewSeatIndexShown]  = useState(defaultSeatIndex);
+  useEffect(() => { setViewBgHidden(defaultBgHidden); }, [defaultBgHidden]);
+  useEffect(() => { setViewGridHidden(defaultGridHidden); }, [defaultGridHidden]);
+  useEffect(() => { setViewSeatIndexShown(defaultSeatIndex); }, [defaultSeatIndex]);
 
   const [bgOffset] = useState({ x: 50, y: 50 });
   const [bgImage,  setBgImage]  = useState('');
@@ -159,20 +176,25 @@ const KCafe = ({ hideMenu = false }) => {
     return z !== null ? parseFloat(z) : DEFAULT_ZOOM;
   });
 
-  const toggleBgHidden = () =>
-    setBgHidden(prev => {
-      const next = !prev;
-      if (hideMenu) localStorage.setItem('kcafe_guest_bgHidden', next);
+  const toggleDefaultSeat = () =>
+    setDefaultSeatIndex(prev => {
+     const next = !prev;
+      if (hideMenu) localStorage.setItem('kcafe_guest_seatIndex', next);
       return next;
     });
+  const handleSaveDisplaySettings = ({ bgHidden, gridHidden, seatIndex }) => {
+    setDefaultBgHidden(bgHidden);
+    setDefaultGridHidden(gridHidden);
+    setDefaultSeatIndex(seatIndex);
 
-  const toggleGridHidden = () =>
-    setGridHidden(prev => {
-      const next = !prev;
-      if (hideMenu) localStorage.setItem('kcafe_guest_gridHidden', next);
-      return next;
-    });
+    setViewBgHidden(bgHidden);
+    setViewGridHidden(gridHidden);
+    setViewSeatIndexShown(seatIndex);
 
+    localStorage.setItem('kcafe_guest_bgHidden',   JSON.stringify(bgHidden));
+    localStorage.setItem('kcafe_guest_gridHidden', JSON.stringify(gridHidden));
+    localStorage.setItem('kcafe_guest_seatIndex',  JSON.stringify(seatIndex));
+   };
 
   // ── Background Generation ────────────────────────────────────────────────
   useEffect(() => {
@@ -196,8 +218,6 @@ const KCafe = ({ hideMenu = false }) => {
     setBgZoom(zoom);     localStorage.setItem('kcafe_bg_zoom', zoom.toString());
     setShowBgForm(false);
   };
-  const [seatIndexShown, setSeatIndexShown] = useState(false);
-  const toggleSeatIndex = () => setSeatIndexShown(p => !p);
 
   // ── Table State & Persistence ─────────────────────────────────────────────
   const [tables, setTables] = useState(() => {
@@ -228,7 +248,9 @@ const KCafe = ({ hideMenu = false }) => {
 
 
   // ── Import Handler ────────────────────────────────────────────────────────
-  const handleImportData = async ({ bgCrop, bgZoom: impZoom, tables: newTables, seatIndexShown: importedSeatShown}) => {
+  const handleImportData = async ({ bgCrop, bgZoom: impZoom, tables: newTables,
+    gridHidden: importedGridHidden, seatIndexShown: importedSeatShown, bgHidden: importedBgHidden
+  }) => {
     setBgZoom(impZoom);  localStorage.setItem('kcafe_bg_zoom',  impZoom.toString());
     setBgCropData(bgCrop); localStorage.setItem('kcafe_bg_crop', JSON.stringify(bgCrop));
 
@@ -238,7 +260,9 @@ const KCafe = ({ hideMenu = false }) => {
     );
 
     if (typeof importedSeatShown === 'boolean') {
-      setSeatIndexShown(importedSeatShown);
+      setDefaultBgHidden(importedBgHidden);
+      setDefaultGridHidden(importedGridHidden);
+      setDefaultSeatIndex(importedSeatShown);
     }
   };
 
@@ -556,16 +580,23 @@ const KCafe = ({ hideMenu = false }) => {
         openBgForm={openBgForm}
         bgCropData={bgCropData}
         bgZoom={bgZoom}
-        bgHidden={bgHidden}
-        onToggleBgHidden={toggleBgHidden}
-        gridHidden={gridHidden}
-        onToggleGridHidden={toggleGridHidden}
   
         onImportData={handleImportData}
 
         addSeat={openAddSeat}
-        seatIndexShown={seatIndexShown}
-        onToggleSeatIndex={toggleSeatIndex}
+        defaultBgHidden={defaultBgHidden}
+        defaultGridHidden={defaultGridHidden}
+        defaultSeatIndex={defaultSeatIndex}
+        viewBgHidden={viewBgHidden}
+        viewGridHidden={viewGridHidden}
+        viewSeatIndex={viewSeatIndexShown}
+        onToggleDefaultBg={() => setDefaultBgHidden(v => !v)}
+        onToggleDefaultGrid={() => setDefaultGridHidden(v => !v)}
+        onToggleDefaultSeat={toggleDefaultSeat}
+        onToggleViewBg={() => setViewBgHidden(v => !v)}
+        onToggleViewGrid={() => setViewGridHidden(v => !v)}
+        onToggleViewSeat={() => setViewSeatIndexShown(v => !v)}
+        onSaveDisplaySettings={handleSaveDisplaySettings}
 
         tables={tables}
         addTable={openAddForm}
@@ -615,14 +646,14 @@ const KCafe = ({ hideMenu = false }) => {
             tables={tables}
             pendingTable={pendingTable}
             updateTableOccupied={updateTableOccupied}
-            showSeatIndex={seatIndexShown}
+            showSeatIndex={viewSeatIndexShown}
 
             mode={mode}
   
             bgOffset={bgOffset}
             bgImage={bgImage || '/img/KCafe.jpg'}
-            hideImage={bgHidden}
-            hideGrid={gridHidden}
+            hideImage={viewBgHidden}
+            hideGrid={viewGridHidden}
   
             handleRotate={rotateLayout}
             rotateCount={rotateCount}
@@ -657,29 +688,34 @@ const KCafe = ({ hideMenu = false }) => {
               <p>目前沒有菜單圖片</p>
             ) : (
               <div className="menu-carousel">
-                <button
-                  className="nav prev"
-                  onClick={() =>
-                    setMenuIdx((menuIdx + menuImages.length - 1) % menuImages.length)
-                  }
-                >
-                  ‹
-                </button>
-  
-                <div className="image-container">
-                  <img
-                    src={menuImages[menuIdx]}
-                    alt={`menu-${menuIdx}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                <div className="carousel-main">
+                  <button
+                    className="nav prev"
+                    onClick={() =>
+                      setMenuIdx((menuIdx + menuImages.length - 1) % menuImages.length)
+                    }
+                  >
+                    ‹
+                  </button>
+    
+                  <div className="image-container">
+                    <img
+                      src={menuImages[menuIdx]}
+                      alt={`menu-${menuIdx}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+    
+                  <button
+                    className="nav next"
+                    onClick={() => setMenuIdx((menuIdx + 1) % menuImages.length)}
+                  >
+                    ›
+                  </button>
+                  </div>
+                <div className="carousel-indicator">
+                  第 {menuIdx + 1} 張 / 共 {menuImages.length} 張
                 </div>
-  
-                <button
-                  className="nav next"
-                  onClick={() => setMenuIdx((menuIdx + 1) % menuImages.length)}
-                >
-                  ›
-                </button>
               </div>
             )}
           </div>

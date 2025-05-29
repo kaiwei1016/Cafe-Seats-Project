@@ -12,13 +12,14 @@ export default function Navbar({
 
   bgCropData,
   bgZoom,
-  bgHidden,
-  onToggleBgHidden,
-  gridHidden,
-  onToggleGridHidden,
+
+  defaultBgHidden, defaultGridHidden, defaultSeatIndex,
+  viewBgHidden,    viewGridHidden,    viewSeatIndex,
+  onToggleDefaultBg, onToggleDefaultGrid, onToggleDefaultSeat,
+  onToggleViewBg,    onToggleViewGrid,    onToggleViewSeat,
+  onSaveDisplaySettings,
 
   onImportData,
-
   mode,
   setMode,
   businessTab,
@@ -28,10 +29,7 @@ export default function Navbar({
 
   tables,
   addTable,
-
   addSeat,
-  seatIndexShown,
-  onToggleSeatIndex,
 
   pendingTable,
   cancelAddTable,
@@ -63,12 +61,12 @@ export default function Navbar({
   const [selectedTableForQR,  setSelectedTableForQR]  = useState('');
   const [showDisplaySettings, setShowDisplaySettings] = useState(false);
 
-  const [tmpBgHidden,          setTmpBgHidden]          = useState(bgHidden);
-  const [tmpGridHidden,        setTmpGridHidden]        = useState(gridHidden);
-  const [originalBgHidden,     setOriginalBgHidden]     = useState(bgHidden);
-  const [originalGridHidden,   setOriginalGridHidden]   = useState(gridHidden);
-  const [tmpSeatIndexShown,      setTmpSeatIndexShown]      = useState(seatIndexShown);
-  const [originalSeatIndexShown, setOriginalSeatIndexShown] = useState(seatIndexShown);
+  const [tmpBgHidden,          setTmpBgHidden]          = useState(defaultBgHidden);
+  const [tmpGridHidden,        setTmpGridHidden]        = useState(defaultGridHidden);
+  const [originalBgHidden,     setOriginalBgHidden]     = useState(defaultBgHidden);
+  const [originalGridHidden,   setOriginalGridHidden]   = useState(defaultGridHidden);
+  const [tmpSeatIndexShown,      setTmpSeatIndexShown]      = useState(defaultSeatIndex);
+  const [originalSeatIndexShown, setOriginalSeatIndexShown] = useState(defaultSeatIndex);
 
 
   const [editSection, setEditSection] = useState('initial');
@@ -89,12 +87,12 @@ export default function Navbar({
   // 打開「顯示設定」時同步暫存值
   useEffect(() => {
     if (showDisplaySettings) {
-      setOriginalBgHidden(bgHidden);
-      setTmpBgHidden(bgHidden);
-      setOriginalGridHidden(gridHidden);
-      setTmpGridHidden(gridHidden);
-      setOriginalSeatIndexShown(seatIndexShown);
-      setTmpSeatIndexShown(seatIndexShown);
+      setOriginalBgHidden(defaultBgHidden);
+      setTmpBgHidden(defaultBgHidden);
+      setOriginalGridHidden(defaultGridHidden);
+      setTmpGridHidden(defaultGridHidden);
+      setOriginalSeatIndexShown(defaultSeatIndex);
+      setTmpSeatIndexShown(defaultSeatIndex);
     }
   }, [showDisplaySettings]);
 
@@ -214,9 +212,9 @@ export default function Navbar({
     const merchantHeader = ['topbar-title', 'bgHidden', 'gridHidden', 'seatIndexShown'].join(',');
     const merchantData   = [
       `"${title.replace(/"/g, '""')}"`,
-      bgHidden,
-      gridHidden,
-      seatIndexShown
+      defaultBgHidden,
+      defaultGridHidden,
+      defaultSeatIndex
     ].join(',');
 
     // 背景裁切資訊
@@ -351,32 +349,32 @@ export default function Navbar({
 
               {menuOpen && (
                 <div className="menu-dropdown">
-                  {/* 通用選項 */}
-                  <div className="menu-section">
-                  {seatIndexShown && (
+                  {/* 座號：只在商家預設啟用時顯示 */}
+                  {defaultSeatIndex && (
                     <div className="menu-item">
-                      <button onClick={onToggleSeatIndex}>
+                      <button onClick={onToggleViewSeat}>
                         顯示椅子座號
-                        <input type="checkbox" checked={seatIndexShown} readOnly />
+                        <input type="checkbox" checked={viewSeatIndex} readOnly />
                       </button>
                     </div>
                   )}
-                  {!bgHidden && (
+                  {/* 背景圖片：只在商家預設啟用時顯示 */}
+                  {!defaultBgHidden && (
                     <div className="menu-item">
-                      <button onClick={onToggleBgHidden}>
+                      <button onClick={onToggleViewBg}>
                         顯示背景圖片
-                        <input type="checkbox" checked={!bgHidden} readOnly />
+                        <input type="checkbox" checked={!viewBgHidden} readOnly />
                       </button>
                     </div>
                   )}
-                  {/* 桌子內部格線：永遠顯示，用於設定預設格線 */}
-                  <div className="menu-item">
-                    <button onClick={onToggleGridHidden}>
-                      桌子內部格線
-                      <input type="checkbox" checked={!gridHidden} readOnly />
-                    </button>
-                  </div>
-                </div>
+                  {/* 格線：顯示 */}
+                    <div className="menu-item">
+                      <button onClick={onToggleViewGrid}>
+                        桌子內部格線
+                        <input type="checkbox" checked={!viewGridHidden} readOnly />
+                      </button>
+                    </div>
+
                   {/* 非顧客/觀察模式 */}
                   {!(mode === 'view' || isGuest) && (
                     <div className="menu-section">
@@ -579,7 +577,7 @@ export default function Navbar({
                     checked={tmpSeatIndexShown}
                     onChange={() => {
                       setTmpSeatIndexShown(v => !v);
-                      onToggleSeatIndex();
+                      onToggleDefaultSeat();
                     }}
                     style={{ opacity:0, width:0, height:0 }}
                   />
@@ -610,7 +608,7 @@ export default function Navbar({
                     checked={!tmpBgHidden}
                     onChange={() => {
                       setTmpBgHidden(v => !v);
-                      onToggleBgHidden();
+                      onToggleDefaultBg();
                     }}
                     style={{ opacity: 0, width: 0, height: 0 }}
                   />
@@ -641,7 +639,7 @@ export default function Navbar({
                     checked={!tmpGridHidden}
                     onChange={() => {
                       setTmpGridHidden(v => !v);
-                      onToggleGridHidden();
+                      onToggleDefaultGrid();
                     }}
                     style={{ opacity: 0, width: 0, height: 0 }}
                   />
@@ -662,11 +660,20 @@ export default function Navbar({
             </div>
 
             <div className="modal-actions">
-              <button onClick={() => setShowDisplaySettings(false)}>儲存</button>
               <button onClick={() => {
-                if (bgHidden !== originalBgHidden)     onToggleBgHidden();
-                if (gridHidden !== originalGridHidden) onToggleGridHidden();
-                if (seatIndexShown !== originalSeatIndexShown) onToggleSeatIndex();
+                onSaveDisplaySettings({
+                  bgHidden: tmpBgHidden,
+                  gridHidden: tmpGridHidden,
+                  seatIndex: tmpSeatIndexShown
+                });
+               setShowDisplaySettings(false);
+              }}>
+              儲存
+              </button>
+              <button onClick={() => {
+                if (defaultBgHidden !== originalBgHidden)     onToggleDefaultBg();
+                if (defaultGridHidden !== originalGridHidden) onToggleDefaultGrid();
+                if (defaultSeatIndex !== originalSeatIndexShown) onToggleDefaultSeat();
                 setShowDisplaySettings(false);
               }}>取消</button>
             </div>

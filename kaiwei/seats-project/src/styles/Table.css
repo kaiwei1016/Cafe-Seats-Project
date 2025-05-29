@@ -38,6 +38,7 @@
   background-color: #fff;
   border: 0.4vmin solid #666;
   border-radius: 1vmin;
+  gap:0px;
 }
 .table.full {
   background-color: #f88;
@@ -47,22 +48,35 @@
 }
 .table-id {
   font-weight: bold;
-  font-size: 2vmin;
-  margin-bottom: -5px;
+  font-size: 1.8vmin;
+  margin-bottom: -6px;
 }
 .table-info {
   font-size: 1.5vmin;
-  margin-bottom: -4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.table-info .extra {
-  margin-left: 1px;
-  font-size: 1vmin;
+
+/* 只有佔用數那一排要水平並排 */
+.table-info .occupancy {
+  display: flex;
+  align-items: center;
+  gap: 1px;   /* 你也可以改成 1px 或 rem */
 }
+
+.table-info .occupancy .extra {
+  /* margin-left 可以在這裡多調 */
+  font-size: 1vmin;  /* 保持原本大小 */
+}
+
 .last-updated {
   font-size: 1.5vmin;
   color: #666;
   white-space: nowrap;
+
 }
+
 .table-tags {
   margin-top: 4px;
   display: flex;
@@ -181,7 +195,7 @@ box-shadow: 0 0 0.4vmin 0.4vmin rgba(0,0,255,0.8) !important; /* 藍框 */
 
 /* 圓形椅子中數字 */
 .seat-index{
-  font-size:0.85rem;
+  font-size:2vmin;
   font-weight:600;
   color:#333;
   text-align:center;

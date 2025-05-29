@@ -152,22 +152,9 @@ const Table = ({
             <div className="table-id">{name}</div>
             {!isSeat && (
               <div className="table-info">
-                {occupied}/{capacity}
-                {extraSeatLimit > 0 && (
-                  <span className="extra">(+{extraSeatLimit})</span>
-                )}
-                {width >= 2 && height >= 2 && updateTime && (
-                  <div className="last-updated">
-                    {formatRelative(updateTime)}前
-                  </div>
-                )}
-                {width >= 3 && height >= 3 && tags.length > 0 && (
-                  <div className="table-tags">
-                    {tags.map(tag => (
-                      <span key={tag} className="tag">{tag}</span>
-                    ))}
-                  </div>
-                )}
+                 <div className="occupancy">
+                  <span className="count">{occupied}/{capacity}</span>
+                </div>
               </div>
             )}
           </>

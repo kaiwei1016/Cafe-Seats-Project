@@ -39,12 +39,45 @@ h2 {
 
 .menu-carousel {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+}
+
+.menu-carousel .carousel-main {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.menu-carousel .carousel-main .image-container {
+  flex: 1 1 auto;
+  min-width: 0; /* 防止過度收縮時跑版 */
+}
+
+.menu-carousel .nav.prev,
+.menu-carousel .nav.next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;          /* 確保在圖片上層 */
+  background: rgba(255,255,255,0.7); /* 半透明可選 */
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.menu-carousel .carousel-main .nav.prev {
+  left: 0.5rem;
+}
+.menu-carousel .carousel-main .nav.next {
+  right: 0.5rem;
 }
 
 .menu-carousel .image-container {
-  width: 180px;             /* 依需求調整寬度 */
+  width: 100vw;
+  height: calc(100vw * 16 / 9);
+  max-width: 400px;
+  max-height: 600px;           /* 依需求調整寬度 */
   aspect-ratio: 9 / 16;     /* 強制 9:16 */
   overflow: hidden;
   border-radius: 4px;
@@ -55,9 +88,17 @@ h2 {
   border: none;
   font-size: 2rem;
   cursor: pointer;
-  color: #555;
+  color: #333;
 }
 
 .menu-carousel .nav:hover {
   color: #1976d2;
 }
+
+
+.menu-carousel .carousel-indicator {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+

@@ -222,6 +222,8 @@ const KCafe = ({ hideMenu = false }) => {
   };
 
   // ── Table State & Persistence ─────────────────────────────────────────────
+  /*    
+  // original read and set table
   const [tables, setTables] = useState(() => {
     const restored = [];
     Object.keys(localStorage).forEach(k => {
@@ -232,6 +234,19 @@ const KCafe = ({ hideMenu = false }) => {
     const base = restored.length ? restored : INITIAL_TABLES;
     return hideMenu ? rotateTablesOnce(base) : base;
   });
+  */
+  
+  // read and set table: connect to database server
+  useEffect(() => {
+  fetch(`${API_URL}/seats`)
+    .then(res => res.json())
+    .then(data => {
+      const tableList = hideMenu ? rotateTablesOnce(data) : data;
+      setTables(tableList);
+    })
+    .catch(console.error);
+    }, [hideMenu]);
+
 
   useEffect(() => {
     if (hideMenu) return;

@@ -366,6 +366,8 @@ const KCafe = ({ hideMenu = false }) => {
   const makeTableId = (type, index) => `${type}_${pad2(index)}`;
 
   // Increment/decrement occupied
+  /*
+  // original localStorage updateTableOccupied
   const updateTableOccupied = (tableId, delta) => {
     setTables(tables.map(t => {
       if (t.table_id !== tableId) return t;
@@ -377,6 +379,40 @@ const KCafe = ({ hideMenu = false }) => {
       };
     }));
   };
+  */
+  
+  // updateTableOccupied: db server
+  const updateTableOccupied = (tableId, delta) => {
+  const target = tables.find(t => t.table_id === tableId);
+  if (!target) return;
+  const maxOcc = target.capacity + (target.extraSeatLimit || 0);
+  const newOccupied = Math.min(maxOcc, Math.max(0, target.occupied + delta));
+  const newTime = delta > 0 ? new Date().toISOString() : target.updateTime;
+
+  fetch(`${API_URL}/seats`)
+    .then(res => res.json())
+    .then(allSeats => {
+      const seat = allSeats.find(s => s.table_id === tableId);
+      if (!seat) return;
+
+      fetch(`${API_URL}/seats/${seat.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          occupied: newOccupied,
+          updateTime: newTime
+        })
+      })
+        .then(() => {
+          setTables(tables.map(t =>
+            t.table_id === tableId
+              ? { ...t, occupied: newOccupied, updateTime: newTime }
+              : t
+          ));
+        });
+    });
+};
+
 
   const rotateLayout = () => {
     setTables(prev => rotateTablesOnce(prev));

@@ -565,6 +565,8 @@ const KCafe = ({ hideMenu = false }) => {
       list.includes(id) ? list.filter(x => x !== id) : [...list, id]
     );
 
+/*
+// original localStorage confirmDeleteTable
   const confirmDeleteTable = () => {
     if (selectedToDeleteList.length === 0) return;
     selectedToDeleteList.forEach(id =>
@@ -574,6 +576,24 @@ const KCafe = ({ hideMenu = false }) => {
     setDeleteTableMode(false);
     setSelectedToDeleteList([]);
   };
+*/
+
+// confirmDeleteTable: db server
+const confirmDeleteTable = () => {
+  selectedToDeleteList.forEach(id => {
+    const seat = tables.find(t => t.table_id === id);
+    if (!seat) return;
+    fetch(`${API_URL}/seats/name/${seat.name}`, {
+      method: "DELETE"
+    })
+      .then(() => {
+        setTables(ts => ts.filter(t => t.table_id !== id));
+      });
+  });
+  setDeleteTableMode(false);
+  setSelectedToDeleteList([]);
+};
+
 
   const cancelDeleteTableMode = () => {
     setDeleteTableMode(false);

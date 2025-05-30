@@ -237,6 +237,8 @@ const KCafe = ({ hideMenu = false }) => {
   */
   
   // read and set table: connect to database server
+  const [tables, setTables] = useState([]);
+
   useEffect(() => {
   fetch(`${API_URL}/seats`)
     .then(res => res.json())

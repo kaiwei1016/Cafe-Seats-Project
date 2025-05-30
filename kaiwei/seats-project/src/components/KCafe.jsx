@@ -9,7 +9,9 @@ import '../styles/Navbar.css';
 import '../styles/Background.css';
 import '../styles/Table.css';
 import '../styles/TableForm.css';
-import '../styles/TableList.css'
+import '../styles/TableList.css';
+
+const API_URL = "http://localhost:8002";
 
 const GRID_UNIT_X = 2;
 const GRID_UNIT_Y = 3.125;

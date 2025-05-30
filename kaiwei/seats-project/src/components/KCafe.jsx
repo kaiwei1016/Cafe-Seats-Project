@@ -492,12 +492,31 @@ const KCafe = ({ hideMenu = false }) => {
     setShowAddForm(false);
   };
   const cancelAddTable = () => setPendingTable(null);
+  
+  /*
+  // original localStorage confirmAddTable
   const confirmAddTable = () => {
     if (!pendingTable) return;
     setTables(tables => [...tables, pendingTable]);
     setPendingTable(null);
   };
-
+  */
+  // confirmAddTable: db server
+  const confirmAddTable = () => {
+  if (!pendingTable) return;
+  fetch(`${API_URL}/seats`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(pendingTable)
+  })
+    .then(res => res.json())
+    .then(newSeat => {
+      setTables(tables => [...tables, newSeat]);
+      setPendingTable(null);
+    })
+    .catch(console.error);
+};
+  
   // ----- Delete Table Flow -----
   const startDeleteTableMode = () => {
     if (mode !== 'edit') return;

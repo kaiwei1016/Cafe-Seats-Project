@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>咖啡廳入座系統</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .primary-btn {
+      background-color: #4CAF50;
+      color: white;
+      flex: 1;
+    }
+
+    .primary-btn:hover {
+      background-color: #45a049;
+    }
+
+    .result-container {
+      margin-top: 30px;
+      padding: 15px;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+      border: 1px solid #d6e9c6;
+      display: block;
+    }
+
+    .error {
+      background-color: #f2dede;
+      color: #a94442;
+      border: 1px solid #ebccd1;
+      display: block;
+    }
+
+    .capacity-info {
+      font-size: 14px;
+      color: #666;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>咖啡廳入座系統</h1>
+
+  <div class="form-group">
+    <label for="areaSelect">選擇區域：</label>
+    <select id="areaSelect" onchange="updateCapacityInfo()">
+      <option value="">-- 請選擇 --</option>
+      <option value="A">A 區</option>
+      <option value="B">B 區</option>
+      <option value="C">C 區</option>
+      <option value="D">D 區</option>
+      <option value="E">E 區</option>
+    </select>
+    <div id="capacityInfo" class="capacity-info"></div>
+  </div>
+
+  <div class="form-group" id="extraChairGroup" style="display: none;">
+    <label for="extraChair">是否需要加椅子？</label>
+    <select id="extraChair" onchange="updateGuestOptions()">
+      <option value="no">否</option>
+      <option value="yes">是</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="guestCount">選擇人數：</label>
+    <select id="guestCount" onchange="validateGuestCount()">
+      <option value="">-- 請選擇人數 --</option>
+    </select>
+    <div id="guestWarning" class="capacity-info" style="color: #a94442;"></div>
+  </div>
+
+  <div class="button-group">
+    <button id="reserveBtn" class="primary-btn" onclick="makeReservation()">
+      <span id="buttonText">✔️ 確認入座</span>
+    </button>
+  </div>
+
+  <div id="resultContainer" class="result-container">
+    <span id="resultMessage"></span>
+  </div>
+
+  <script>
+    const areaCapacities = {
+      'A': { normal: 4 },
+      'B': { normal: 4 },
+      'C': { normal: 4 },
+      'D': { normal: 2 },
+      'E': { normal: 2 }
+    };
+
+    function updateCapacityInfo() {
+      const area = document.getElementById('areaSelect').value;
+      const capacityInfoElement = document.getElementById('capacityInfo');
+      const extraChairGroup = document.getElementById('extraChairGroup');
+
+      if (!area) {
+        capacityInfoElement.textContent = '';
+        extraChairGroup.style.display = 'none';
+        document.getElementById('guestCount').innerHTML = '<option value="">-- 請選擇人數 --</option>';
+        return;
+      }
+
+      const capacity = areaCapacities[area];
+      capacityInfoElement.textContent = `此桌人數: ${capacity.normal}人，若加椅子可至 ${capacity.normal + 1}人`;
+      extraChairGroup.style.display = 'block';
+      updateGuestOptions();
+    }
+
+    function updateGuestOptions() {
+      const area = document.getElementById('areaSelect').value;
+      const extraChair = document.getElementById('extraChair')?.value || 'no';
+      const guestCountSelect = document.getElementById('guestCount');
+      const base = areaCapacities[area]?.normal || 0;
+      const max = extraChair === 'yes' ? base + 1 : base;
+
+      guestCountSelect.innerHTML = '<option value="">-- 請選擇人數 --</option>';
+      for (let i = 1; i <= max; i++) {
+        guestCountSelect.innerHTML += `<option value="${i}">${i} 人</option>`;
+      }
+
+      validateGuestCount();
+    }
+
+    function validateGuestCount() {
+      const area = document.getElementById('areaSelect').value;
+      const guestCount = parseInt(document.getElementById('guestCount').value);
+      const warningElement = document.getElementById('guestWarning');
+      const extraChair = document.getElementById('extraChair')?.value || 'no';
+
+      if (!area || isNaN(guestCount)) {
+        warningElement.textContent = '';
+        return true;
+      }
+
+      const base = areaCapacities[area].normal;
+      const maxAllowed = extraChair === 'yes' ? base + 1 : base;
+
+      if (guestCount > maxAllowed) {
+        warningElement.textContent = `⚠️ ${area}區最多可容 ${maxAllowed} 人（按加椅子選項）`;
+        return false;
+      } else {
+        warningElement.textContent = '';
+      }
+
+      return true;
+    }
+
+    function makeReservation() {
+      const area = document.getElementById('areaSelect').value;
+      const guestCount = document.getElementById('guestCount').value;
+
+      if (!area) {
+        alert('請選擇區域！');
+        return;
+      }
+
+      if (!guestCount || guestCount < 1) {
+        alert('請選擇有效人數！');
+        return;
+      }
+
+      if (!validateGuestCount()) {
+        return;
+      }
+
+      alert(`入座成功！區域: ${area} 人數: ${guestCount}`);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const tableId = params.get('table_id');
+
+      if (tableId) {
+        const areaSelect = document.getElementById('areaSelect');
+        areaSelect.value = tableId.toUpperCase();
+        updateCapacityInfo();
+      }
+    });
+  </script>
+</body>
+</html>

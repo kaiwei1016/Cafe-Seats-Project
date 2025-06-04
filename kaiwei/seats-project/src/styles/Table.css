@@ -34,7 +34,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   background-color: #fff;
   border: 0.4vmin solid #666;
   border-radius: 1vmin;
@@ -49,7 +49,6 @@
 .table-id {
   font-weight: bold;
   font-size: 1.8vmin;
-  margin-bottom: -6px;
 }
 .table-info {
   font-size: 1.5vmin;

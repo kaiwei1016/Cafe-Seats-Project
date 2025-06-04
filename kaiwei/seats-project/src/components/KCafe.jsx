@@ -9,9 +9,7 @@ import '../styles/Navbar.css';
 import '../styles/Background.css';
 import '../styles/Table.css';
 import '../styles/TableForm.css';
-import '../styles/TableList.css';
-
-const API_URL = "http://localhost:8002";
+import '../styles/TableList.css'
 
 const GRID_UNIT_X = 2;
 const GRID_UNIT_Y = 3.125;
@@ -222,8 +220,6 @@ const KCafe = ({ hideMenu = false }) => {
   };
 
   // ── Table State & Persistence ─────────────────────────────────────────────
-  /*    
-  // original read and set table
   const [tables, setTables] = useState(() => {
     const restored = [];
     Object.keys(localStorage).forEach(k => {
@@ -234,21 +230,6 @@ const KCafe = ({ hideMenu = false }) => {
     const base = restored.length ? restored : INITIAL_TABLES;
     return hideMenu ? rotateTablesOnce(base) : base;
   });
-  */
-  
-  // read and set table: connect to database server
-  const [tables, setTables] = useState([]);
-
-  useEffect(() => {
-  fetch(`${API_URL}/seats`)
-    .then(res => res.json())
-    .then(data => {
-      const tableList = hideMenu ? rotateTablesOnce(data) : data;
-      setTables(tableList);
-    })
-    .catch(console.error);
-    }, [hideMenu]);
-
 
   useEffect(() => {
     if (hideMenu) return;
@@ -368,8 +349,6 @@ const KCafe = ({ hideMenu = false }) => {
   const makeTableId = (type, index) => `${type}_${pad2(index)}`;
 
   // Increment/decrement occupied
-  /*
-  // original localStorage updateTableOccupied
   const updateTableOccupied = (tableId, delta) => {
     setTables(tables.map(t => {
       if (t.table_id !== tableId) return t;
@@ -381,40 +360,6 @@ const KCafe = ({ hideMenu = false }) => {
       };
     }));
   };
-  */
-  
-  // updateTableOccupied: db server
-  const updateTableOccupied = (tableId, delta) => {
-  const target = tables.find(t => t.table_id === tableId);
-  if (!target) return;
-  const maxOcc = target.capacity + (target.extraSeatLimit || 0);
-  const newOccupied = Math.min(maxOcc, Math.max(0, target.occupied + delta));
-  const newTime = delta > 0 ? new Date().toISOString() : target.updateTime;
-
-  fetch(`${API_URL}/seats`)
-    .then(res => res.json())
-    .then(allSeats => {
-      const seat = allSeats.find(s => s.table_id === tableId);
-      if (!seat) return;
-
-      fetch(`${API_URL}/seats/${seat.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          occupied: newOccupied,
-          updateTime: newTime
-        })
-      })
-        .then(() => {
-          setTables(tables.map(t =>
-            t.table_id === tableId
-              ? { ...t, occupied: newOccupied, updateTime: newTime }
-              : t
-          ));
-        });
-    });
-};
-
 
   const rotateLayout = () => {
     setTables(prev => rotateTablesOnce(prev));
@@ -530,31 +475,12 @@ const KCafe = ({ hideMenu = false }) => {
     setShowAddForm(false);
   };
   const cancelAddTable = () => setPendingTable(null);
-  
-  /*
-  // original localStorage confirmAddTable
   const confirmAddTable = () => {
     if (!pendingTable) return;
     setTables(tables => [...tables, pendingTable]);
     setPendingTable(null);
   };
-  */
-  // confirmAddTable: db server
-  const confirmAddTable = () => {
-  if (!pendingTable) return;
-  fetch(`${API_URL}/seats`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(pendingTable)
-  })
-    .then(res => res.json())
-    .then(newSeat => {
-      setTables(tables => [...tables, newSeat]);
-      setPendingTable(null);
-    })
-    .catch(console.error);
-};
-  
+
   // ----- Delete Table Flow -----
   const startDeleteTableMode = () => {
     if (mode !== 'edit') return;
@@ -567,8 +493,6 @@ const KCafe = ({ hideMenu = false }) => {
       list.includes(id) ? list.filter(x => x !== id) : [...list, id]
     );
 
-/*
-// original localStorage confirmDeleteTable
   const confirmDeleteTable = () => {
     if (selectedToDeleteList.length === 0) return;
     selectedToDeleteList.forEach(id =>
@@ -578,24 +502,6 @@ const KCafe = ({ hideMenu = false }) => {
     setDeleteTableMode(false);
     setSelectedToDeleteList([]);
   };
-*/
-
-// confirmDeleteTable: db server
-const confirmDeleteTable = () => {
-  selectedToDeleteList.forEach(id => {
-    const seat = tables.find(t => t.table_id === id);
-    if (!seat) return;
-    fetch(`${API_URL}/seats/name/${seat.name}`, {
-      method: "DELETE"
-    })
-      .then(() => {
-        setTables(ts => ts.filter(t => t.table_id !== id));
-      });
-  });
-  setDeleteTableMode(false);
-  setSelectedToDeleteList([]);
-};
-
 
   const cancelDeleteTableMode = () => {
     setDeleteTableMode(false);

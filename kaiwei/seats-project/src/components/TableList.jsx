@@ -1,3 +1,4 @@
+// src/components/TableList.jsx
 import React from 'react';
 import '../styles/TableList.css';
 
@@ -9,10 +10,9 @@ export default function TableList({
 }) {
   const safeTables = Array.isArray(tables) ? tables : [];
 
+  // 依照 name 屬性排序
   const sortedTables = [...safeTables].sort((a, b) =>
-    typeof a.table_id === 'number'
-      ? a.table_id - b.table_id
-      : String(a.table_id).localeCompare(String(b.table_id))
+    String(a.name).localeCompare(String(b.name))
   );
 
   const filteredTables = sortedTables.filter(
@@ -77,7 +77,7 @@ export default function TableList({
             <li key={t.table_id} className="table-item">
               <div className="table-content">
                 <div className={`table-icon ${statusClass}`}>🪑</div>
-                <div className="table-info">
+                <div className="table-card">
                   <div className="info-top">
                     <div className="table-name">
                       {t.name} (

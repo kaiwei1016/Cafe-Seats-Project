@@ -133,29 +133,15 @@ const KCafe = ({ hideMenu = false }) => {
 
 
   // ── Background & Grid Visibility ──────────────────────────────────────────
+  const [title, setTitle] = useState("Seats Viewer");
+  const [logo,  setLogo]  = useState("/img/logo.png");
   const [rotateCount, setRotateCount] = useState(hideMenu ? 1 : 0);
   const [showBgForm,  setShowBgForm]  = useState(false);
 
-  const [defaultBgHidden, setDefaultBgHidden] = useState(() => {
-   const stored = localStorage.getItem('kcafe_guest_bgHidden');
-   return stored !== null
-     ? JSON.parse(stored)
-     : false;
-  });
+  const [defaultBgHidden, setDefaultBgHidden] = useState(false);
+  const [defaultGridHidden, setDefaultGridHidden] = useState(false);
+  const [defaultSeatIndex, setDefaultSeatIndex] = useState(true);
 
-  const [defaultGridHidden, setDefaultGridHidden] = useState(() => {
-    const stored = localStorage.getItem('kcafe_guest_gridHidden');
-    return stored !== null
-      ? JSON.parse(stored)
-      : false;
-    });
-
-  const [defaultSeatIndex, setDefaultSeatIndex] = useState(() => {
-    const stored = localStorage.getItem('kcafe_guest_seatIndex');
-    return stored !== null
-      ? JSON.parse(stored)
-      : true;
-  });
 
   const [viewBgHidden,        setViewBgHidden]        = useState(defaultBgHidden);
   const [viewGridHidden,      setViewGridHidden]      = useState(defaultGridHidden);
@@ -163,18 +149,33 @@ const KCafe = ({ hideMenu = false }) => {
   useEffect(() => { setViewBgHidden(defaultBgHidden); }, [defaultBgHidden]);
   useEffect(() => { setViewGridHidden(defaultGridHidden); }, [defaultGridHidden]);
   useEffect(() => { setViewSeatIndexShown(defaultSeatIndex); }, [defaultSeatIndex]);
+  useEffect(() => {
+    if (hideMenu) return;
+
+    fetch("http://localhost:8002/background/1F")
+      .then(res => res.json())
+      .then(data => {
+        setTitle(data.title || "Seats Viewer");
+        setLogo(data.logo  || "/img/logo.png");
+        setBgCropData({
+          x: data.cropX,
+          y: data.cropY,
+          width: data.cropWidth,
+          height: data.cropHeight
+        });
+        setBgZoom(data.cropZoom);
+        setDefaultBgHidden(data.bgHidden);
+        setDefaultGridHidden(data.gridHidden);
+        setDefaultSeatIndex(data.seatIndex);
+      })
+      .catch(console.error);
+  }, [hideMenu]);
 
   const [bgOffset] = useState({ x: 50, y: 50 });
   const [bgImage,  setBgImage]  = useState('');
 
-  const [bgCropData, setBgCropData] = useState(() =>
-    JSON.parse(localStorage.getItem('kcafe_bg_crop') || JSON.stringify(DEFAULT_CROP))
-  );
-
-  const [bgZoom, setBgZoom] = useState(() => {
-    const z = localStorage.getItem('kcafe_bg_zoom');
-    return z !== null ? parseFloat(z) : DEFAULT_ZOOM;
-  });
+  const [bgCropData, setBgCropData] = useState(DEFAULT_CROP);
+  const [bgZoom, setBgZoom] = useState(DEFAULT_ZOOM);
 
   const toggleDefaultSeat = () =>
     setDefaultSeatIndex(prev => {
@@ -191,10 +192,25 @@ const KCafe = ({ hideMenu = false }) => {
     setViewGridHidden(gridHidden);
     setViewSeatIndexShown(seatIndex);
 
-    localStorage.setItem('kcafe_guest_bgHidden',   JSON.stringify(bgHidden));
-    localStorage.setItem('kcafe_guest_gridHidden', JSON.stringify(gridHidden));
-    localStorage.setItem('kcafe_guest_seatIndex',  JSON.stringify(seatIndex));
-   };
+    fetch("http://localhost:8002/background", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        floor_id: "1F",
+        cropX: bgCropData.x,
+        cropY: bgCropData.y,
+        cropWidth: bgCropData.width,
+        cropHeight: bgCropData.height,
+        cropZoom: bgZoom,
+        rotation: rotateCount * 90,
+        bgHidden,
+        gridHidden,
+        seatIndex,
+        title,
+        logo
+      })
+    }).catch(console.error);
+  };
 
   // ── Background Generation ────────────────────────────────────────────────
   useEffect(() => {
@@ -214,29 +230,31 @@ const KCafe = ({ hideMenu = false }) => {
 
   const saveBgForm = ({ url, crop, zoom }) => {
     if (!url) return;
-    setBgCropData(crop); localStorage.setItem('kcafe_bg_crop', JSON.stringify(crop));
-    setBgZoom(zoom);     localStorage.setItem('kcafe_bg_zoom', zoom.toString());
+    setBgCropData(crop);
+    setBgZoom(zoom);
     setShowBgForm(false);
+
+    handleSaveDisplaySettings({
+      bgHidden: defaultBgHidden,
+      gridHidden: defaultGridHidden,
+      seatIndex: defaultSeatIndex
+    });
   };
 
   // ── Table State & Persistence ─────────────────────────────────────────────
-  const [tables, setTables] = useState(() => {
-    const restored = [];
-    Object.keys(localStorage).forEach(k => {
-      if (k.startsWith('kcafe_table_')) {
-        try { restored.push(JSON.parse(localStorage.getItem(k))); } catch {}
-      }
-    });
-    const base = restored.length ? restored : INITIAL_TABLES;
-    return hideMenu ? rotateTablesOnce(base) : base;
-  });
+  const [tables, setTables] = useState([]);
 
   useEffect(() => {
-    if (hideMenu) return;
-    tables.forEach(t =>
-      localStorage.setItem(`kcafe_table_${t.table_id}`, JSON.stringify(t))
-    );
-  }, [tables, hideMenu]);
+  if (hideMenu) return;
+
+  fetch("http://localhost:8002/tables")
+    .then(res => res.json())
+    .then(data => {
+      const fetched = data;
+      setTables(fetched);
+    })
+    .catch(err => console.error("讀取資料失敗", err));
+}, [hideMenu]);
 
   const toggleAvailable = tableId => {
     setTables(ts =>
@@ -248,22 +266,61 @@ const KCafe = ({ hideMenu = false }) => {
 
 
   // ── Import Handler ────────────────────────────────────────────────────────
-  const handleImportData = async ({ bgCrop, bgZoom: impZoom, tables: newTables,
-    gridHidden: importedGridHidden, seatIndexShown: importedSeatShown, bgHidden: importedBgHidden
+  const handleImportData = async ({
+    bgCrop, bgZoom: impZoom, tables: newTables,
+    gridHidden: importedGridHidden,
+    seatIndexShown: importedSeatShown,
+    bgHidden: importedBgHidden,
+    title, logo
   }) => {
-    setBgZoom(impZoom);  localStorage.setItem('kcafe_bg_zoom',  impZoom.toString());
-    setBgCropData(bgCrop); localStorage.setItem('kcafe_bg_crop', JSON.stringify(bgCrop));
-
+    setRotateCount(0);
+    setBgZoom(impZoom);
+    setBgCropData(bgCrop);
     setTables(newTables);
-    newTables.forEach(t =>
-      localStorage.setItem(`kcafe_table_${t.table_id}`, JSON.stringify(t))
-    );
 
-    if (typeof importedSeatShown === 'boolean') {
+    if (
+      typeof importedBgHidden === 'boolean' &&
+      typeof importedGridHidden === 'boolean' &&
+      typeof importedSeatShown === 'boolean'
+    ) {
       setDefaultBgHidden(importedBgHidden);
       setDefaultGridHidden(importedGridHidden);
       setDefaultSeatIndex(importedSeatShown);
+      setTitle(title);
+      setLogo(logo);
+
+      handleSaveDisplaySettings({
+        bgHidden: importedBgHidden,
+        gridHidden: importedGridHidden,
+        seatIndex: importedSeatShown,
+        title,
+        logo
+      });
     }
+
+    await fetch("http://localhost:8002/tables/clear", {
+      method: "DELETE"
+    });
+
+    const results = await Promise.allSettled(
+        newTables.map(t =>
+          fetch("http://localhost:8002/tables", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(t)
+          })
+        )
+      );
+
+      const failed = results.filter(r =>
+        r.status === "rejected" || (r.value && !r.value.ok)
+      );
+
+      if (failed.length > 0) {
+        alert(`匯入完成，但有 ${failed.length} 筆資料上傳失敗，請檢查格式或資料內容`);
+      } else {
+        alert(`匯入成功，共匯入 ${newTables.length} 筆桌位`);
+      }
   };
 
 
@@ -326,12 +383,6 @@ const KCafe = ({ hideMenu = false }) => {
     const id = setInterval(() => window.location.reload(), 30000);
     return () => clearInterval(id);
   }, [hideMenu]);
-
-  useEffect(() => {
-    if (mode === 'view') setRotateCount(1);
-    else if (!hideMenu) setRotateCount(0);
-  }, [mode, hideMenu]);
-
 
   // ── Computed Helpers ──────────────────────────────────────────────────────
   const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
@@ -476,10 +527,21 @@ const KCafe = ({ hideMenu = false }) => {
   };
   const cancelAddTable = () => setPendingTable(null);
   const confirmAddTable = () => {
-    if (!pendingTable) return;
-    setTables(tables => [...tables, pendingTable]);
-    setPendingTable(null);
-  };
+  if (!pendingTable) return;
+
+  fetch("http://localhost:8002/tables", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(pendingTable)
+  })
+    .then(res => res.json())
+    .then(newTable => {
+      setTables(tables => [...tables, newTable]);
+      setPendingTable(null);
+    })
+    .catch(err => console.error("新增桌子失敗", err));
+};
+
 
   // ----- Delete Table Flow -----
   const startDeleteTableMode = () => {
@@ -494,14 +556,19 @@ const KCafe = ({ hideMenu = false }) => {
     );
 
   const confirmDeleteTable = () => {
-    if (selectedToDeleteList.length === 0) return;
-    selectedToDeleteList.forEach(id =>
-      localStorage.removeItem(`kcafe_table_${id}`)
-    );
+  if (selectedToDeleteList.length === 0) return;
+
+  Promise.all(
+    selectedToDeleteList.map(id =>
+      fetch(`http://localhost:8002/tables/${id}`, { method: "DELETE" })
+    )
+  ).then(() => {
     setTables(ts => ts.filter(t => !selectedToDeleteList.includes(t.table_id)));
     setDeleteTableMode(false);
     setSelectedToDeleteList([]);
-  };
+  }).catch(err => console.error("刪除失敗", err));
+};
+
 
   const cancelDeleteTableMode = () => {
     setDeleteTableMode(false);
@@ -536,17 +603,22 @@ const KCafe = ({ hideMenu = false }) => {
   };
   const cancelEditForm = () => setShowEditForm(false);
   const saveEditForm = () => {
-    setTables(tables.map(t => {
-      if (t.table_id !== editTableInput.table_id) return t;
-      // 如果 name 空白，就保留原來的 t.name
-      const name = editTableInput.name.trim() || t.name;
-      return {
-        ...editTableInput,
-        name
-      };
-    }));
-    setShowEditForm(false);
-  };
+  const name = editTableInput.name.trim() || editTableInput.name;
+  const payload = { ...editTableInput, name };
+
+  fetch(`http://localhost:8002/tables/${payload.table_id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(res => res.json())
+    .then(updated => {
+      setTables(tables.map(t => t.table_id === updated.table_id ? updated : t));
+      setShowEditForm(false);
+    })
+    .catch(err => console.error("更新失敗", err));
+};
+
 
   // Overlap checks
   const hasOverlapAdd  = !!pendingTable && tables.some(t => rectsOverlap(t, pendingTable));
@@ -567,7 +639,6 @@ const KCafe = ({ hideMenu = false }) => {
   
       <Navbar
         hideMenu={hideMenu}
-  
         mode={mode}
         setMode={setMode}
   
@@ -582,6 +653,10 @@ const KCafe = ({ hideMenu = false }) => {
         bgZoom={bgZoom}
   
         onImportData={handleImportData}
+        title={title}
+        logo={logo}
+        setTitle={setTitle}
+        setLogo={setLogo}
 
         addSeat={openAddSeat}
         defaultBgHidden={defaultBgHidden}

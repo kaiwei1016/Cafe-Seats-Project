@@ -59,9 +59,10 @@
   .table-list .table-status {
     font-size: 0.875rem;
     font-weight: 500;
+    font-weight: bold;
   }
 
-  .table-info {
+  .table-card {
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -76,14 +77,14 @@
     display:flex; 
   }
 
-    .info-bottom {
-    display: flex;         /* 啟用 flex */
-    flex-direction: column;
-    justify-content: flex-start;  /* 主軸(預設 row→水平)左對齊 */
-    align-items: flex-start;
-    gap: 5px;             /* 子項之間 12px */
-    font-size: 12px;
-    }
+  .info-bottom {
+  display: flex;         /* 啟用 flex */
+  flex-direction: column;
+  justify-content: flex-start;  /* 主軸(預設 row→水平)左對齊 */
+  align-items: flex-start;
+  gap: 5px;             /* 子項之間 12px */
+  font-size: 12px;
+  }
 
   .last-updated {
     font-size: 12px;

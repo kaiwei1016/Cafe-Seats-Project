@@ -7,11 +7,8 @@ import NavbarForm from './Forms/NavbarForm';
 const isGuest = window.location.pathname.startsWith('/guest');
 
 export default function Navbar({
-  hideMenu,
-  openBgForm,
-
-  bgCropData,
-  bgZoom,
+  hideMenu, openBgForm, bgCropData, bgZoom,
+  title, logo, setTitle, setLogo,
 
   defaultBgHidden, defaultGridHidden, defaultSeatIndex,
   viewBgHidden,    viewGridHidden,    viewSeatIndex,
@@ -52,9 +49,6 @@ export default function Navbar({
   /* ==========================================================================
      State & Refs
   ========================================================================== */
-  const [title, setTitle] = useState(() => localStorage.getItem('kcafe_title') || 'Seats Viewer');
-  const [logo,  setLogo]  = useState(() => localStorage.getItem('kcafe_logo')  || '/img/logo.png');
-
   const [leftMenuOpen,        setLeftMenuOpen]        = useState(false);
   const [showMerchantForm,    setShowMerchantForm]    = useState(false);
   const [showQRCodeOptions,   setShowQRCodeOptions]   = useState(false);
@@ -183,6 +177,9 @@ export default function Navbar({
             case 'tags':
               obj.tags = val ? val.split(',') : [];
               break;
+            case 'updateTime':
+              obj.updateTime = val ? val : null;
+              break;
             default:
               obj[h] = val;
           }
@@ -199,6 +196,7 @@ export default function Navbar({
         bgCrop,
         bgZoom:     bgZoomImported,
         tables:     importedTables,
+        logo, 
       });
     };
     reader.readAsText(file, 'utf-8');
@@ -688,11 +686,12 @@ export default function Navbar({
         currentTitle={title}
         currentLogo={logo}
         onSave={({ title: newTitle, logo: newLogo }) => {
-          const t = newTitle || 'Seats Viewer';
-          setTitle(t);
+          setTitle(newTitle || 'Seats Viewer');
           setLogo(newLogo);
-          localStorage.setItem('kcafe_title', t);
-          localStorage.setItem('kcafe_logo', newLogo);
+          handleSaveDisplaySettings({
+            title: newTitle || 'Seats Viewer',
+            logo: newLogo
+          });
         }}
       />
     </>

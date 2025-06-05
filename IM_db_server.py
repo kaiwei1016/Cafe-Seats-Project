@@ -1,12 +1,20 @@
 from fastapi import FastAPI, HTTPException, Path
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from pymongo import MongoClient
+from pymongo.collection import ReturnDocument
 from bson import ObjectId
 from datetime import datetime
 import urllib.parse
 
-app = FastAPI(title="Cafe Seat Management API (Updated)")
+app = FastAPI(title="Cafe Table Management API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 # MongoDB 連線設定
 username = urllib.parse.quote_plus("user_01")
@@ -18,101 +26,150 @@ MONGO_URI = f"mongodb://{username}:{password}@{host}/{database}"
 client = MongoClient(MONGO_URI)
 db = client[database]
 collection = db["im_final_project"]
+bg_collection = db["background_settings"]
+
 
 # ======== Pydantic Schemas ========
-class SeatBase(BaseModel):
-    name: str = Field(..., description="座位名稱")
-    left: int = Field(..., description="X 座標")
-    top: float = Field(..., description="Y 座標")
-    available: bool = Field(..., description="是否有人")
+class TableBase(BaseModel):
+    table_id: str
+    floor: str
+    index: int
+    name: str
 
-    table_id: Optional[str] = Field(None, description="桌子 ID")
-    floor: Optional[str] = Field(None, description="樓層")
-    index: Optional[int] = Field(None, description="排列 index")
-    width: Optional[int] = Field(None, description="寬度")
-    height: Optional[int] = Field(None, description="高度")
-    capacity: Optional[int] = Field(1, ge=1, description="原始座位數")
-    occupied: Optional[int] = Field(0, ge=0, description="已占位人數")
-    extraSeatLimit: Optional[int] = Field(0, ge=0, description="可額外增加座位")
-    tags: Optional[str] = Field("", description="標籤")
-    description: Optional[str] = Field("", description="備註")
-    updateTime: Optional[datetime] = Field(None, description="更新時間")
+    left: float
+    top: float
+    width: float
+    height: float
+
+    capacity: int
+    occupied: int
+    extraSeatLimit: int
+
+    tags: List[str]
+    description: str
+    updateTime: Optional[datetime]
+    available: bool
 
     class Config:
         extra = "forbid"
 
-class SeatUpdate(BaseModel):
-    name: Optional[str]
-    left: Optional[int]
-    top: Optional[float]
-    available: Optional[bool]
+class TableUpdate(BaseModel):
     table_id: Optional[str]
     floor: Optional[str]
     index: Optional[int]
-    width: Optional[int]
-    height: Optional[int]
+    name: Optional[str]
+
+    left: Optional[float]
+    top: Optional[float]
+    width: Optional[float]
+    height: Optional[float]
+
     capacity: Optional[int]
     occupied: Optional[int]
     extraSeatLimit: Optional[int]
-    tags: Optional[str]
+
+    tags: Optional[List[str]]
     description: Optional[str]
     updateTime: Optional[datetime]
+    available: Optional[bool]
+
 
     class Config:
         extra = "forbid"
 
-class SeatResponse(SeatBase):
+class TableResponse(TableBase):
+    id: str
+
+class BackgroundSetting(BaseModel):
+    floor_id: str
+    cropX: int
+    cropY: int
+    cropWidth: int
+    cropHeight: int
+    cropZoom: float
+    rotation: int
+    bgHidden: bool
+    gridHidden: bool
+    seatIndex: bool
+    title: Optional[str] = "Seats Viewer"
+    logo: Optional[str] = "/img/logo.png"
+
+class BackgroundSettingResponse(BackgroundSetting):
     id: str
 
 # ======== Helper Function ========
-def format_seat(seat: dict) -> dict:
+def format_table(table: dict) -> dict:
+    tags = table.get("tags", [])
+    if isinstance(tags, str):
+        tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
+
     return {
-        "id": str(seat.get("_id")),
-        "name": seat.get("name"),
-        "left": seat.get("left"),
-        "top": seat.get("top"),
-        "available": seat.get("available"),
-        "table_id": seat.get("table_id"),
-        "floor": seat.get("floor"),
-        "index": seat.get("index"),
-        "width": seat.get("width"),
-        "height": seat.get("height"),
-        "capacity": seat.get("capacity", 1),
-        "occupied": seat.get("occupied", 0),
-        "extraSeatLimit": seat.get("extraSeatLimit", 0),
-        "tags": seat.get("tags", ""),
-        "description": seat.get("description", ""),
-        "updateTime": seat.get("updateTime"),
+        "id": str(table["_id"]),
+        "table_id": table["table_id"],
+        "floor": table["floor"],
+        "index": table["index"],
+        "name": table["name"],
+        "left": table["left"],
+        "top": table["top"],
+        "width": table["width"],
+        "height": table["height"],
+        "capacity": table["capacity"],
+        "occupied": table["occupied"],
+        "extraSeatLimit": table["extraSeatLimit"],
+        "tags": tags,
+        "description": table.get("description", ""),
+        "updateTime": table.get("updateTime"),
+        "available": table["available"]
     }
 
-# ======== Routes ========
-@app.get("/seats", response_model=List[SeatResponse])
-def get_all_seats():
-    return [format_seat(seat) for seat in collection.find()]
+# --- API Routes ---
+@app.get("/tables", response_model=List[TableResponse])
+def get_all_tables():
+    return [format_table(t) for t in collection.find()]
 
-@app.post("/seats", response_model=SeatResponse)
-def create_seat(seat: SeatBase):
-    seat_dict = seat.dict()
-    result = collection.insert_one(seat_dict)
-    seat_dict["_id"] = result.inserted_id
-    return format_seat(seat_dict)
+@app.post("/tables", response_model=TableResponse)
+def create_table(table: TableBase):
+    data = table.dict()
+    result = collection.insert_one(data)
+    data["_id"] = result.inserted_id
+    return format_table(data)
 
-@app.patch("/seats/{seat_id}", response_model=SeatResponse)
-def update_seat(seat_id: str, seat: SeatUpdate):
-    update_data = {k: v for k, v in seat.dict(exclude_unset=True).items()}
-    result = collection.update_one({"_id": ObjectId(seat_id)}, {"$set": update_data})
+@app.delete("/tables/clear")
+def clear_all_tables():
+    result = collection.delete_many({})
+    return {"message": f"Deleted {result.deleted_count} tables"}
+
+@app.patch("/tables/{table_id}", response_model=TableResponse)
+def update_table(table_id: str, table: TableUpdate):
+    updates = {k: v for k, v in table.dict(exclude_unset=True).items()}
+    result = collection.update_one({"table_id": table_id}, {"$set": updates})
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Seat not found")
-    updated = collection.find_one({"_id": ObjectId(seat_id)})
-    return format_seat(updated)
+        raise HTTPException(status_code=404, detail="Table not found")
+    updated = collection.find_one({"table_id": table_id})
+    return format_table(updated)
 
-@app.delete("/seats/name/{seat_name}")
-def delete_seat(seat_name: str):
-    result = collection.delete_one({"name": seat_name})
+@app.delete("/tables/{table_id}")
+def delete_table(table_id: str):
+    result = collection.delete_one({"table_id": table_id})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail=f"Seat '{seat_name}' not found")
-    return {"message": f"Seat '{seat_name}' deleted successfully"}
+        raise HTTPException(status_code=404, detail=f"Table '{table_id}' not found")
+    return {"message": f"Table '{table_id}' deleted successfully"}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+@app.post("/background", response_model=BackgroundSettingResponse)
+def create_or_update_bg_setting(setting: BackgroundSetting):
+    result = bg_collection.find_one_and_replace(
+        {"floor_id": setting.floor_id},
+        setting.dict(),
+        upsert=True,
+        return_document=ReturnDocument.AFTER
+    )
+    return result
+
+@app.get("/background/{floor_id}", response_model=BackgroundSettingResponse)
+def get_bg_setting(floor_id: str):
+    doc = bg_collection.find_one({"floor_id": floor_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Not found")
+    doc["id"] = str(doc["_id"])
+    return doc
+

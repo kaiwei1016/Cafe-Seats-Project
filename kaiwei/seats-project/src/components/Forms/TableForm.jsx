@@ -67,8 +67,8 @@ export default function TableForm({
 
   // Field validation
   const validCapacity = Number.isInteger(tableInput.capacity) && tableInput.capacity >= 0;
-  const validWidth = Number.isInteger(tableInput.width) && tableInput.width >= 1;
-  const validHeight = Number.isInteger(tableInput.height) && tableInput.height >= 1;
+  const validWidth  = typeof tableInput.width === 'number' && isFinite(tableInput.width)  && tableInput.width  >= 0.5;
+  const validHeight = typeof tableInput.height === 'number' && isFinite(tableInput.height) && tableInput.height >= 0.5;
   const validExtraSeatLimit = Number.isInteger(tableInput.extraSeatLimit) && tableInput.extraSeatLimit >= 0;
   const disabled = !(validCapacity && validWidth && validHeight && validExtraSeatLimit);
 
@@ -93,9 +93,9 @@ export default function TableForm({
               <label className="ratio-label">
                 桌子比例 (寬 × 高):
                 <div className="ratio-inputs">
-                  <input type="number" step={1} min={1} value={tableInput.width} onChange={e => onInputChange('width', Math.max(1, Math.floor(+e.target.value)) || 1)} />
+                  <input type="number" step={0.5} min={1} value={tableInput.width} onChange={e => onInputChange('width', Math.max(0.5, parseFloat(e.target.value) || 0.5))} />
                   <span className="ratio-mul">×</span>
-                  <input type="number" step={1} min={1} value={tableInput.height} onChange={e => onInputChange('height', Math.max(1, Math.floor(+e.target.value)) || 1)} />
+                  <input type="number" step={0.5} min={1} value={tableInput.height} onChange={e => onInputChange('height', Math.max(0.5, parseFloat(e.target.value) || 0.5))} />
                 </div>
               </label>
             </div>

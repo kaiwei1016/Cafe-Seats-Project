@@ -118,7 +118,10 @@ export default function Navbar({
      Derived Values & Helpers
   ========================================================================== */
   const isTableAction = deleteTableMode || moveTableMode;
-  const sortedTables  = [...tables].sort((a, b) => a.index - b.index);
+  const sortedTables = [...tables].sort((a, b) =>
+    String(a.name).localeCompare(String(b.name))
+  );
+
 
   /* ==========================================================================
      檔案匯入 (Import)
@@ -321,10 +324,9 @@ export default function Navbar({
                 </button>
                 <button
                   disabled={isTableAction}
-                  className={mode === 'view' ? 'active' : ''}
+                  className={isGuest ? 'active' : ''}
                   onClick={() => {
-                    setMode('view');
-                    setBusinessTab('seating');
+                    window.open('/guest', '_blank');
                   }}
                 >
                   顧客視角
@@ -347,7 +349,7 @@ export default function Navbar({
 
               {menuOpen && (
                 <div className="menu-dropdown">
-                  {/* 座號：只在商家預設啟用時顯示 */}
+                  
                   {defaultSeatIndex && (
                     <div className="menu-item">
                       <button onClick={onToggleViewSeat}>
@@ -356,24 +358,13 @@ export default function Navbar({
                       </button>
                     </div>
                   )}
-                  {/* 背景圖片：只在商家預設啟用時顯示 */}
-                  {!defaultBgHidden && (
                     <div className="menu-item">
-                      <button onClick={onToggleViewBg}>
-                        顯示背景圖片
-                        <input type="checkbox" checked={!viewBgHidden} readOnly />
-                      </button>
-                    </div>
-                  )}
-                  {/* 格線：顯示 */}
-                    <div className="menu-item">
-                      <button onClick={onToggleViewGrid}>
-                        桌子內部格線
-                        <input type="checkbox" checked={!viewGridHidden} readOnly />
-                      </button>
-                    </div>
+                    <button onClick={e => { e.stopPropagation(); window.location.reload(); }}>
+                      刷新座位狀態 🔄
+                    </button>
+                  </div>
 
-                  {/* 非顧客/觀察模式 */}
+                  {/* 非顧客觀察模式 */}
                   {!(mode === 'view' || isGuest) && (
                     <div className="menu-section">
                       <button
@@ -408,19 +399,32 @@ export default function Navbar({
                         {showQRCodeOptions ? '下載 QR code' : '取得 QR code'}
                       </button>
                       {showQRCodeOptions && (
-                        <select
-                          value={selectedTableForQR}
-                          onChange={e => setSelectedTableForQR(e.target.value)}
-                          style={{ marginBottom: '0.5rem' }}
+                      <select
+                        value={selectedTableForQR}
+                        onChange={e => setSelectedTableForQR(e.target.value)}
+                        style={{
+                          marginBottom: '0.5rem',
+                          textAlign: 'center', 
+                          textAlignLast: 'center' 
+                        }}
+                      >
+                        <option
+                          value=""
+                          style={{ textAlign: 'center' }} 
                         >
-                          <option value="">選擇桌號</option>
-                          {sortedTables.map(t => (
-                            <option key={t.table_id} value={t.table_id}>
-                              桌號 {t.name} ({t.table_id})
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                          選擇桌號
+                        </option>
+                        {sortedTables.map(t => (
+                          <option
+                            key={t.table_id}
+                            value={t.table_id}
+                            style={{ textAlign: 'center' }} 
+                          >
+                            桌號 {t.name} ({t.table_id})
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     </div>
                   )}
                 </div>

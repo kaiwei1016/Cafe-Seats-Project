@@ -1,3 +1,4 @@
+// src/components/Forms/BackgroundForm.jsx
 import React, { useState, useCallback, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
 import '../../styles/BackgroundForm.css';
@@ -38,19 +39,25 @@ const getCroppedImg = (imageSrc, pixelCrop) =>
     image.onerror = error => reject(error);
   });
 
+// 預設的裁切參數
+const DEFAULT_CROP = { x: 408, y: 146, width: 1105, height: 707 };
+const DEFAULT_ZOOM = 1.411;
+
 export default function BackgroundForm({
   srcOriginal,
-  initialCrop = { x: 0, y: 0, width: 100, height: 100 },
-  initialZoom = 1,
+  initialCrop = DEFAULT_CROP,
+  initialZoom = DEFAULT_ZOOM,
   onSave,
   onCancel
 }) {
   const imageSrc = srcOriginal;
 
+  // 1. state：crop、zoom、cropAreaPixels
   const [crop, setCrop] = useState({ x: initialCrop.x, y: initialCrop.y });
   const [zoom, setZoom] = useState(initialZoom);
   const [cropAreaPixels, setCropAreaPixels] = useState(initialCrop);
 
+  // 當 props.initialCrop 或 initialZoom 改變時，重設 state
   useEffect(() => {
     setCrop({ x: initialCrop.x, y: initialCrop.y });
     setCropAreaPixels(initialCrop);
@@ -64,10 +71,18 @@ export default function BackgroundForm({
     setCropAreaPixels(pixels);
   }, []);
 
+  // 2. 處理「儲存」按鈕：裁切並回傳
   const handleSave = async () => {
     if (!cropAreaPixels) return;
     const url = await getCroppedImg(imageSrc, cropAreaPixels);
     onSave({ url, crop: cropAreaPixels, zoom });
+  };
+
+  // 3. 處理「恢复預設圖片」按鈕：將 crop 和 zoom 重置
+  const handleResetToDefault = () => {
+    setCrop({ x: DEFAULT_CROP.x, y: DEFAULT_CROP.y });
+    setCropAreaPixels(DEFAULT_CROP);
+    setZoom(DEFAULT_ZOOM);
   };
 
   return (
@@ -75,6 +90,7 @@ export default function BackgroundForm({
       <div className="modal background-form">
         <h3>編輯背景圖片</h3>
 
+        {/* ===== Cropper Preview 區 ===== */}
         <div className="bgform-preview">
           <Cropper
             image={imageSrc}
@@ -90,6 +106,7 @@ export default function BackgroundForm({
             onCropComplete={onCropComplete}
           />
 
+          {/* Zoom Slider */}
           <div className="slider-container">
             <input
               type="range"
@@ -103,9 +120,14 @@ export default function BackgroundForm({
           </div>
         </div>
 
+        {/* ===== 儲存／取消 按鈕區 ===== */}
         <div className="modal-actions">
-          <button onClick={handleSave}>儲存</button>
-          <button onClick={onCancel}>取消</button>
+          <button className="btn-save" onClick={handleSave}>
+            儲存
+          </button>
+          <button className="btn-cancel" onClick={onCancel}>
+            取消
+          </button>
         </div>
       </div>
     </div>

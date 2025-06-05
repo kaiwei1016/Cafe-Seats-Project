@@ -129,6 +129,23 @@
   .menu-container .menu-dropdown > * {
     white-space: nowrap;    /* 各項目內不要換行 */
   }
+
+
+  .menu-item > button {
+    display: block;
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+
+  .menu-item > button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
   
   /* QR code options inside dropdown */
   .menu-container .qr-options {

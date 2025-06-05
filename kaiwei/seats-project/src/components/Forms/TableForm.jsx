@@ -14,7 +14,7 @@ export default function TableForm({
 
   // Determine title and button labels
   const isAdd = mode === 'add';
-  const title = isAdd ? `新增桌子 ${nextIndex}` : `編輯桌子 ${tableInput.index}`;
+  const title = isAdd ? `新增桌子 ${nextIndex}` : `編輯桌子 ${tableInput.name}`;
   const submitLabel = isAdd ? '新增' : '儲存';
   const namePlaceholder = isAdd ? '留空則自動生成' : '留空則保留原桌名';
 

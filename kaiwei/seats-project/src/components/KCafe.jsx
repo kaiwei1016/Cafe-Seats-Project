@@ -135,7 +135,7 @@ const KCafe = ({ hideMenu = false }) => {
   // ── Background & Grid Visibility ──────────────────────────────────────────
   const [title, setTitle] = useState("Seats Viewer");
   const [logo,  setLogo]  = useState("/img/logo.png");
-  const [rotateCount, setRotateCount] = useState(hideMenu ? 1 : 0);
+  const [rotateCount, setRotateCount] = useState(0);
   const [showBgForm,  setShowBgForm]  = useState(false);
 
   const [defaultBgHidden, setDefaultBgHidden] = useState(false);
@@ -150,7 +150,6 @@ const KCafe = ({ hideMenu = false }) => {
   useEffect(() => { setViewGridHidden(defaultGridHidden); }, [defaultGridHidden]);
   useEffect(() => { setViewSeatIndexShown(defaultSeatIndex); }, [defaultSeatIndex]);
   useEffect(() => {
-    if (hideMenu) return;
 
     fetch("http://localhost:8002/background/1F")
       .then(res => res.json())
@@ -245,16 +244,14 @@ const KCafe = ({ hideMenu = false }) => {
   const [tables, setTables] = useState([]);
 
   useEffect(() => {
-  if (hideMenu) return;
-
-  fetch("http://localhost:8002/tables")
-    .then(res => res.json())
-    .then(data => {
-      const fetched = data;
-      setTables(fetched);
-    })
-    .catch(err => console.error("讀取資料失敗", err));
-}, [hideMenu]);
+    fetch("http://localhost:8002/tables")
+      .then(res => res.json())
+      .then(data => {
+        const fetched = data;
+        setTables(fetched);
+      })
+      .catch(err => console.error("讀取資料失敗", err));
+  }, [hideMenu]);
 
   const toggleAvailable = tableId => {
     setTables(ts =>
@@ -271,7 +268,8 @@ const KCafe = ({ hideMenu = false }) => {
     gridHidden: importedGridHidden,
     seatIndexShown: importedSeatShown,
     bgHidden: importedBgHidden,
-    title, logo
+    title: importedTitle,
+    logo
   }) => {
     setRotateCount(0);
     setBgZoom(impZoom);
@@ -286,17 +284,29 @@ const KCafe = ({ hideMenu = false }) => {
       setDefaultBgHidden(importedBgHidden);
       setDefaultGridHidden(importedGridHidden);
       setDefaultSeatIndex(importedSeatShown);
-      setTitle(title);
+      setTitle(importedTitle);
       setLogo(logo);
 
-      handleSaveDisplaySettings({
-        bgHidden: importedBgHidden,
-        gridHidden: importedGridHidden,
-        seatIndex: importedSeatShown,
-        title,
-        logo
-      });
+      fetch("http://localhost:8002/background", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          floor_id: "1F",
+          cropX:    bgCrop.x,
+          cropY:    bgCrop.y,
+          cropWidth:  bgCrop.width,
+          cropHeight: bgCrop.height,
+          cropZoom:   impZoom,
+          rotation:   0,
+          bgHidden:   importedBgHidden,
+          gridHidden: importedGridHidden,
+          seatIndex:  importedSeatShown,
+          title:      importedTitle,
+          logo:       logo
+        })
+      }).catch(console.error);
     }
+  
 
     await fetch("http://localhost:8002/tables/clear", {
       method: "DELETE"
@@ -378,10 +388,9 @@ const KCafe = ({ hideMenu = false }) => {
   }, []);
 
   useEffect(() => {
-    if (!hideMenu) return;
-    setMode('view');
-    const id = setInterval(() => window.location.reload(), 30000);
-    return () => clearInterval(id);
+    if (hideMenu) {
+     setMode('view');
+   }
   }, [hideMenu]);
 
   // ── Computed Helpers ──────────────────────────────────────────────────────
@@ -603,21 +612,32 @@ const KCafe = ({ hideMenu = false }) => {
   };
   const cancelEditForm = () => setShowEditForm(false);
   const saveEditForm = () => {
-  const name = editTableInput.name.trim() || editTableInput.name;
-  const payload = { ...editTableInput, name };
+    const name = editTableInput.name.trim() || editTableInput.name;
+    const payload = { ...editTableInput, name };
+    delete payload.id;  
 
-  fetch(`http://localhost:8002/tables/${payload.table_id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
-    .then(res => res.json())
-    .then(updated => {
-      setTables(tables.map(t => t.table_id === updated.table_id ? updated : t));
-      setShowEditForm(false);
+    fetch(`http://localhost:8002/tables/${payload.table_id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     })
-    .catch(err => console.error("更新失敗", err));
-};
+      .then(async res => {
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => null);
+          console.error("更新失敗:", res.status, errJson);
+          return;
+        }
+        return res.json();
+      })
+      .then(updated => {
+        if (updated) {
+          setTables(ts => ts.map(t => (t.table_id === updated.table_id ? updated : t)));
+          setShowEditForm(false);
+        }
+      })
+      .catch(err => console.error("更新錯誤", err));
+  };
+
 
 
   // Overlap checks

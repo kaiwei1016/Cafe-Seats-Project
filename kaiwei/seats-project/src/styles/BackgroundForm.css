@@ -1,102 +1,146 @@
-/* TableForm.css */
+/* src/styles/BackgroundForm.css */
 
-/* ensure padding/border are included in element’s width/height */
+/* 確保 box-sizing 設定 */
 *, *::before, *::after {
-    box-sizing: border-box;
-  }
-  
-  /* modal backdrop */
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  
-  /* modal window */
-  .modal.background-form {
-    background: #fff;
-    padding: 1rem;
-    border-radius: 6px;
-    width: 80vw;
-    max-width: 100%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    /* 限制高度並啟用內部捲動 */
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  .modal.background-form h3 {
-    margin-top: 0;
-    text-align: center;
-  }
+  box-sizing: border-box;
+}
 
-  /* --- Preview Area (25:16) --- */
-  .bgform-preview {
-    position: relative;
-    width: 100%;
-    /* 用 aspect-ratio 維持 25:16，並限制最大高度 */
-    aspect-ratio: 25 / 16;
-    max-height: 75vh;
-    overflow: hidden;
-    background: #ffffff00;
-  }
-  .bgform-preview .reactEasyCrop_Container {
-    position: absolute !important;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
+/* modal backdrop (不變) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
-  .reactEasyCrop_CropArea {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image:
-      linear-gradient(to right, rgba(0, 0, 0, 0.25) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 1px, transparent 1px);
-    background-size: 4% 6.25%;  /* ← 這裡指定內層格線大小 */
-  }
+/* -----------------------------------------------------------------------------
+   modal window：調整寬度、移除 max-height/overflow，避免捲動
+   原本是 width: 80vw; max-height: 90vh; overflow-y: auto;
+   這裡改為更小的寬度，並禁止內部捲動。
+----------------------------------------------------------------------------- */
+.modal.background-form {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 6px;
+  /* 由原本 80vw → 改成 60vw，讓整體更小 */
+  width: 60vw;
+  max-width: 100%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 
-  /* --- Actions --- */
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 1rem;
-  }
-  .modal-actions button {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  .modal-actions button:first-child {
-    background: #0077cc;
-    color: #fff;
-  }
-  .modal-actions button:first-child:hover {
-    background: #005fa3;
-  }
-  .modal-actions button:last-child {
-    background: #ccc;
-    color: #333;
-  }
-  .modal-actions button:last-child:hover {
-    background: #aaa;
-  }
-  
-  /* container for cropper + slider */
-  .cropper-with-slider {
-    position: relative;
-    width: 100%;
-    padding-top: calc(100% * 16/25);
-    overflow: hidden;
-  }
+  /* 移除以下兩行，讓內容不會因為超出而產生捲動 */
+  /* max-height: 90vh; */
+  /* overflow-y: auto; */
+}
+
+/* 標題置中 (可保留原本) */
+.modal.background-form h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
+/* -----------------------------------------------------------------------------
+   Preview Area (25:16)：適度調整 max-height，避免過高造成捲動
+   原本 max-height: 75vh，這裡改成 50vh。
+----------------------------------------------------------------------------- */
+.bgform-preview {
+  position: relative;
+  width: 100%;
+  /* 維持 25:16 比例 */
+  aspect-ratio: 25 / 16;
+  /* 由原本 75vh → 改成 50vh，減少高度 */
+  max-height: 50vh;
+  overflow: hidden;
+  background: #ffffff00;
+}
+
+/* 裁切器容器 (不變) */
+.bgform-preview .reactEasyCrop_Container {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 裁切區格線 (不變) */
+.reactEasyCrop_CropArea {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 1px, transparent 1px);
+  background-size: 4% 6.25%;
+}
+
+/* -----------------------------------------------------------------------------
+   旋轉按鈕：位置不變
+----------------------------------------------------------------------------- */
+.bgform-rotate-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  padding: 4px 8px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #666;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.bgform-rotate-btn:hover {
+  background: rgba(230, 230, 255, 0.9);
+  border-color: #333;
+}
+
+/* -----------------------------------------------------------------------------
+   額外操作按鈕區 (不變，可自行調整留白)
+----------------------------------------------------------------------------- */
+.bgform-extra-actions {
+  margin: 0.5rem 0 1rem;
+  padding: 0 1rem;
+}
+
+/* -----------------------------------------------------------------------------
+   儲存／取消 按鈕區 (不變)
+----------------------------------------------------------------------------- */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.modal-actions button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-actions button:first-child {
+  background: #0077cc;
+  color: #fff;
+}
+
+.modal-actions button:first-child:hover {
+  background: #005fa3;
+}
+
+.modal-actions button:last-child {
+  background: #ccc;
+  color: #333;
+}
+
+.modal-actions button:last-child:hover {
+  background: #aaa;
+}
+
   
   /* slider container */
   .slider-container {
@@ -135,5 +179,3 @@
     border: 2px solid #fff;
     border-radius: 50%;
   }
-
-  

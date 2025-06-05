@@ -176,10 +176,12 @@ const Table = ({
       )}
 
       {mode === 'edit' && !deleteTableMode && !moveTableMode && !isSeat && (
-        <button
-          className="edit-table-button"
-          onClick={e => { e.stopPropagation(); onEdit(); }}
-        >編輯</button>
+       <img
+         src="/img/edit_blue.png"
+         className="edit-icon"
+         onClick={e => { e.stopPropagation(); onEdit(); }}
+         alt="編輯"
+       />
       )}
     </div>
   );

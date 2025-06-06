@@ -2,8 +2,8 @@
 body {
     font-family: '', 'Noto Sans TC', sans-serif;
     display: flex;
-    flex-direction: column;      /* 改成垂直排 */
-    align-items: stretch;         /* 只水平置中 */
+    flex-direction: column;
+    align-items: stretch;
   }
 
 html, body {
@@ -28,7 +28,7 @@ h2 {
   }
 
   .main-content {
-  box-sizing: border-box; /* 讓 padding 不影響百分比寬高計算 */
+  box-sizing: border-box;
 }
 
 .menu-placeholder {
@@ -47,11 +47,14 @@ h2 {
   display: flex;
   align-items: center;
   position: relative;
+
 }
 
 .menu-carousel .carousel-main .image-container {
   flex: 1 1 auto;
-  min-width: 0; /* 防止過度收縮時跑版 */
+  min-width: 0;
+  border: 2px solid #ccc;
+
 }
 
 .menu-carousel .nav.prev,
@@ -59,8 +62,8 @@ h2 {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 2;          /* 確保在圖片上層 */
-  background: rgba(255,255,255,0.7); /* 半透明可選 */
+  z-index: 2;
+  background: rgba(255,255,255,0.7);
   border: none;
   padding: 0.5rem;
   cursor: pointer;
@@ -102,7 +105,12 @@ h2 {
   color: #666;
 }
 
-/* 保留 70px 給觀察模式的底部按鈕列 */
 .kcafe-container {
   padding-bottom: 70px;
+}
+
+.menu-carousel .nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed; 
+  color: #aaa;
 }

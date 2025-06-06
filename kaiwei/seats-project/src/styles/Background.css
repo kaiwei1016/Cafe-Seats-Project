@@ -4,16 +4,16 @@
   width: 100%;
   height: calc(100vw *  16 / 25);
   overflow: hidden;
-  display: block;           /* 預防 image 預設為 inline */
-  margin: 0 auto;           /* 水平置中 */
+  display: block;
+  margin: 0 auto;
   max-width: 1200px;
   max-height: 768px;
-  border: 2px solid #ccc;              /* 淺灰實線邊框 */
-  margin-top: 10px;
+  border: 2px solid #ccc;
+  margin-top: 1rem;
 }
 
 .bg-image {
-  position: absolute;       /* 绝对定位，填满容器 */
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -25,7 +25,7 @@
 }
 
 .bg-white-fill {
-  z-index: 0; /* 確保在最底層 */
+  z-index: 0;
 }
 
 .background.show-grid::after {

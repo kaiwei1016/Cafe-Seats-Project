@@ -3,7 +3,7 @@ import BackgroundForm from './Forms/BackgroundForm';
 import TableForm from './Forms/TableForm';
 import Background from './Background';
 import Navbar from './Navbar';
-import TableList from './TableList'
+import ManagePage from './ManagePage';
 import '../styles/Global.css';
 import '../styles/Navbar.css';
 import '../styles/Background.css';
@@ -133,6 +133,7 @@ const KCafe = ({ hideMenu = false }) => {
 
 
   // ── Background & Grid Visibility ──────────────────────────────────────────
+  const [hideTables, setHideTables] = useState(false);
   const [title, setTitle] = useState("Seats Viewer");
   const [logo,  setLogo]  = useState("/img/logo.png");
   const [rotateCount, setRotateCount] = useState(0);
@@ -661,6 +662,8 @@ const KCafe = ({ hideMenu = false }) => {
         hideMenu={hideMenu}
         mode={mode}
         setMode={setMode}
+        hideTables={hideTables}
+        onToggleHideTables={() => setHideTables(prev => !prev)}
   
         businessTab={businessTab}
         setBusinessTab={setBusinessTab}
@@ -739,6 +742,7 @@ const KCafe = ({ hideMenu = false }) => {
         {showBackground && (
           <Background
             tables={tables}
+            hideTables={hideTables}
             pendingTable={pendingTable}
             updateTableOccupied={updateTableOccupied}
             showSeatIndex={viewSeatIndexShown}
@@ -768,15 +772,9 @@ const KCafe = ({ hideMenu = false }) => {
         )}
   
         {isBizOrView && businessTab === 'info' && (
-          <TableList
-            tables={tables}
-            mode={mode}
-  
-            onEditTable={openEditForm}
-            onToggleAvailable={toggleAvailable}
-          />
+          <ManagePage/>
         )}
-  
+
         {isBizOrView && businessTab === 'menu' && (
           <div className="menu-placeholder">
             {menuImages.length === 0 ? (
@@ -786,9 +784,8 @@ const KCafe = ({ hideMenu = false }) => {
                 <div className="carousel-main">
                   <button
                     className="nav prev"
-                    onClick={() =>
-                      setMenuIdx((menuIdx + menuImages.length - 1) % menuImages.length)
-                    }
+                    disabled={menuIdx === 0}
+                    onClick={() => menuIdx > 0 && setMenuIdx(menuIdx - 1)}
                   >
                     ‹
                   </button>
@@ -803,7 +800,10 @@ const KCafe = ({ hideMenu = false }) => {
     
                   <button
                     className="nav next"
-                    onClick={() => setMenuIdx((menuIdx + 1) % menuImages.length)}
+                    disabled={menuIdx === menuImages.length - 1}
+                    onClick={() =>
+                      menuIdx < menuImages.length - 1 && setMenuIdx(menuIdx + 1)
+                    }
                   >
                     ›
                   </button>

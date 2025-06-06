@@ -161,9 +161,10 @@
     padding: 0.3rem 0.6rem;
     font-size: 0.9rem;
   }
-  .menu-container .qr-options button:disabled {
+  .menu-container button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+    background: #f0f0f0;
   }
 
   /* 让所有 menu-section 的子项垂直排列 */

@@ -7,14 +7,13 @@ export default function Background({
   tables,
   pendingTable,
   showSeatIndex,
-
   bgOffset,
   bgImage,
   hideImage,
   hideGrid,
+  hideTables,
 
   mode,
-
   updateTableOccupied,
   handleTableMouseDown,
 
@@ -54,7 +53,7 @@ export default function Background({
         <img src={bgImage} alt="" className="bg-image" style={{ objectPosition }} />
       )}
 
-      {tables.map(tbl => (
+      {!hideTables && tables.map(tbl => (
         <Table
           key={tbl.table_id}
           tableId={tbl.table_id}

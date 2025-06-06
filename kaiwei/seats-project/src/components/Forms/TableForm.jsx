@@ -54,12 +54,6 @@ export default function TableForm({
             0/{tableInput.capacity}
             {tableInput.extraSeatLimit > 0 && <span className="extra">(+{tableInput.extraSeatLimit})</span>}
           </div>
-
-          {Array.isArray(tableInput.tags) && tableInput.tags.length > 0 && (
-            <div className="table-tags">
-              {tableInput.tags.map(tag => <span key={tag} className="tag">{tag}</span>)}
-            </div>
-          )}
         </div>
       </div>
     );

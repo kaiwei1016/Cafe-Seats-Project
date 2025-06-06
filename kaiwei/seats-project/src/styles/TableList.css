@@ -92,11 +92,10 @@
 
   .table-tags {
     gap: 5px;
-    margin-left: 0px;
   }
 
   .table-tags .tag {
-    font-size: 10px;  /* e.g. 14px，但用 rem 更容易響應式 */
+    font-size: 0.8rem;
   }
   
   /* 狀態顏色 */
@@ -123,27 +122,27 @@
   }
   
   /* 三種狀態的光暈顏色 */
-  .table-icon.full {
+  .table-icon.status-full {
     /* 飽和：紅光 */
     box-shadow: 0 0 8px rgba(244, 67, 54, 0.8);
   }
-  .table-icon.partial {
+  .table-icon.status-partial {
     /* 部分：黃光 */
     box-shadow: 0 0 8px rgba(255, 179, 0, 0.8);
   }
-  .table-icon.empty {
+  .table-icon.status-empty {
     /* 空桌：綠光 */
     box-shadow: 0 0 8px rgba(76, 175, 80, 0.8);
   }
 
   /* 讓整個 table-item 左右排，並置中 */
-.table-list .table-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem;
-    border-bottom: 1px solid #e0e0e0;
-  }
+  .table-list .table-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
   
   /* 把 icon + info 包成一塊 */
   .table-list .table-content {
@@ -178,4 +177,3 @@
     width: 100%;
   }
 }
-

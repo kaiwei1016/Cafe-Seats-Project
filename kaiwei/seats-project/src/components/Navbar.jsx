@@ -1,5 +1,6 @@
 // src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
 import '../styles/Navbar.css';
 import NavbarForm from './Forms/NavbarForm';
 
@@ -14,6 +15,7 @@ export default function Navbar({
   viewBgHidden,    viewGridHidden,    viewSeatIndex,
   onToggleDefaultBg, onToggleDefaultGrid, onToggleDefaultSeat,
   onToggleViewBg,    onToggleViewGrid,    onToggleViewSeat,
+  hideTables, onToggleHideTables,
   onSaveDisplaySettings,
 
   onImportData,
@@ -121,6 +123,53 @@ export default function Navbar({
   const sortedTables = [...tables].sort((a, b) =>
     String(a.name).localeCompare(String(b.name))
   );
+  const qrRef = useRef(null);
+   const generateQRCode = () => {
+    if (!selectedTableForQR) {
+      alert('請先選擇一個桌號');
+      return;
+    }
+    // 1. 組出要編碼的 URL，例如 customer?table=<table_id>
+    const targetUrl = `http://localhost:8001/customer?table_id=${encodeURIComponent(
+      selectedTableForQR
+    )}`;
+
+    // 2. 先把隱藏的 QRCode <canvas> 更新為最新的值（因為 value 可能剛才才更新）
+    //    再從 <canvas> 取得 data URL
+    const canvas = qrRef.current?.querySelector('canvas');
+    if (!canvas) {
+      alert('QR Code 尚未渲染，請稍後再試');
+      return;
+    }
+    // 使用 canvas.toDataURL() 取得 base64 的 PNG 圖片
+    const dataUrl = canvas.toDataURL('image/png');
+
+    // 3. 在新分頁打開一個視窗，並把 dataUrl 寫成 <img src="..." />
+    const win = window.open(
+      '',
+      '_blank',
+      'width=350,height=400,menubar=no,toolbar=no,location=no,status=no'
+    );
+    if (win) {
+      win.document.write(`
+        <!DOCTYPE html>
+        <html lang="zh-TW">
+        <head>
+          <meta charset="UTF-8" />
+          <title>桌號 ${selectedTableForQR} 的 QR Code</title>
+          <style>
+            body { margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f5f5f5; }
+            img { max-width: 100%; max-height: 100%; }
+          </style>
+        </head>
+        <body>
+          <img src="${dataUrl}" alt="QR Code for ${targetUrl}" />
+        </body>
+        </html>
+      `);
+      win.document.close();
+    }
+  };
 
 
   /* ==========================================================================
@@ -349,24 +398,37 @@ export default function Navbar({
 
               {menuOpen && (
                 <div className="menu-dropdown">
-                  
+                  <div className="menu-item">
+                    <button onClick={e => { e.stopPropagation(); window.location.reload(); }}>
+                      刷新座位狀態 🔄
+                    </button>
+                  </div>
                   {defaultSeatIndex && (
+                    
                     <div className="menu-item">
                       <button onClick={onToggleViewSeat}>
                         顯示椅子座號
                         <input type="checkbox" checked={viewSeatIndex} readOnly />
                       </button>
                     </div>
-                  )}
-                    <div className="menu-item">
-                    <button onClick={e => { e.stopPropagation(); window.location.reload(); }}>
-                      刷新座位狀態 🔄
-                    </button>
-                  </div>
+                  )}               
 
                   {/* 非顧客觀察模式 */}
                   {!(mode === 'view' || isGuest) && (
                     <div className="menu-section">
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          onToggleHideTables();
+                        }}
+                      >
+                        暫時隱藏桌椅
+                        <input
+                          type="checkbox"
+                          checked={hideTables}
+                          readOnly
+                        />
+                      </button>
                       <button
                         onClick={e => {
                           e.stopPropagation();
@@ -376,7 +438,7 @@ export default function Navbar({
                       >
                         編輯商家資訊
                       </button>
-                      <button onClick={exportCSV}>匯出桌位資料</button>
+                      <button onClick={exportCSV}>備份桌位資料</button>
                       <button onClick={handleImportClick}>匯入桌位資料</button>
                       <input
                         ref={fileInputRef}
@@ -386,19 +448,23 @@ export default function Navbar({
                         onChange={handleFileChange}
                       />
                       <button
-                        onClick={() => {
+                        onClick={e => {
+                          e.stopPropagation();
                           if (!showQRCodeOptions) {
-                            setShowQRCodeOptions(true);
-                          } else if (selectedTableForQR) {
-                            downloadQRCode(selectedTableForQR);
+                            setSelectedTableForQR('');
+                            setShowQRCodeOptions(true);       // 展開選單
+                          } else {
+                            generateQRCode();                 // 已展開 → 產生 QR Code
                           }
                         }}
+                        /* 當已展開但尚未選桌號時禁用 */
                         disabled={showQRCodeOptions && !selectedTableForQR}
                         style={{ width: '100%' }}
                       >
                         {showQRCodeOptions ? '下載 QR code' : '取得 QR code'}
                       </button>
                       {showQRCodeOptions && (
+                      <>
                       <select
                         value={selectedTableForQR}
                         onChange={e => setSelectedTableForQR(e.target.value)}
@@ -414,16 +480,32 @@ export default function Navbar({
                         >
                           選擇桌號
                         </option>
-                        {sortedTables.map(t => (
-                          <option
-                            key={t.table_id}
-                            value={t.table_id}
-                            style={{ textAlign: 'center' }} 
-                          >
-                            桌號 {t.name} ({t.table_id})
-                          </option>
-                        ))}
+                        {tables
+                          .filter(t => t.capacity > 0 && !t.table_id.startsWith('s_'))
+                          .sort((a, b) =>
+                            String(a.name).localeCompare(String(b.name))
+                          )
+                          .map(t => (
+                            <option key={t.table_id} value={t.table_id}>
+                              桌號 {t.name} ({t.table_id})
+                            </option>
+                          ))}
                       </select>
+
+                      {/* 隱藏的 QRCode 元件*/}
+                      <div
+                        ref={qrRef}
+                        style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}
+                      >
+                        <QRCodeCanvas
+                          value={`http://localhost:8001/customer?table_id=${encodeURIComponent(
+                            selectedTableForQR
+                          )}`}
+                          size={300}
+                          includeMargin={true}
+                        />
+                      </div>
+                     </>
                     )}
                     </div>
                   )}
@@ -449,13 +531,13 @@ export default function Navbar({
                   className={businessTab === 'info' ? 'active' : ''}
                   onClick={() => setBusinessTab('info')}
                 >
-                  座位列表
+                  座位管理
                 </button>
                 <button
                   className={businessTab === 'menu' ? 'active' : ''}
                   onClick={() => setBusinessTab('menu')}
                 >
-                  菜單資訊
+                  編輯菜單
                 </button>
               </div>
             )}
@@ -508,18 +590,19 @@ export default function Navbar({
                 </>
               ) : (
                 <>
-                  <button onClick={addSeat} disabled={isTableAction}>
-                    新增椅子
-                  </button>
                   <button onClick={addTable} disabled={isTableAction}>
                     新增桌子
                   </button>
-                  <button onClick={() => startDeleteTableMode()} disabled={isTableAction}>
-                    刪除桌椅
+                  <button onClick={addSeat} disabled={isTableAction}>
+                    新增椅子
                   </button>
                   <button onClick={() => startMoveTableMode()} disabled={isTableAction}>
                     移動桌椅
                   </button>
+                  <button onClick={() => startDeleteTableMode()} disabled={isTableAction}>
+                    刪除桌椅
+                  </button>
+
                   <button onClick={() => setEditSection('initial')} disabled={isTableAction}>
                     返回
                   </button>

@@ -4,7 +4,9 @@ MongoDB-based Cafe Seat Management Server
 Uses MongoDB for data persistence
 """
 
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
+from fastapi import Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
@@ -96,11 +98,10 @@ def format_seat(seat: dict) -> dict:
         "updateTime": seat.get("updateTime"),
     }
 
-def init_sample_data():
-    """初始化範例數據（如果集合為空）"""
-    if collection.count_documents({}) == 0:
-        sample_seats = [
-            {
+def force_reset_sample_data():
+    """強制重設 sample 資料"""
+    sample_seats = [
+        {
             "id": "1",
             "name": "A",
             "left": 20,
@@ -117,8 +118,8 @@ def init_sample_data():
             "tags": "插座、廁所近",
             "description": "四人長方形桌",
             "updateTime": None
-            },
-            {
+        },
+        {
             "id": "2",
             "name": "B",
             "left": 40,
@@ -135,8 +136,8 @@ def init_sample_data():
             "tags": "插座",
             "description": "靠牆雙人桌",
             "updateTime": datetime.now()
-            },
-            {
+        },
+        {
             "id": "3",
             "name": "C",
             "left": 60,
@@ -153,8 +154,8 @@ def init_sample_data():
             "tags": "插座",
             "description": "窗邊雙人桌",
             "updateTime": datetime.now()
-            },
-            {
+        },
+        {
             "id": "4",
             "name": "D",
             "left": 20,
@@ -171,8 +172,8 @@ def init_sample_data():
             "tags": "插座、冷氣通風口",
             "description": "雙人桌",
             "updateTime": datetime.now()
-            },
-            {
+        },
+        {
             "id": "5",
             "name": "E",
             "left": 60,
@@ -189,11 +190,14 @@ def init_sample_data():
             "tags": "靠窗,安靜",
             "description": "靠窗五人長桌",
             "updateTime": None
-            }
-        ]
-        
-        collection.insert_many(sample_seats)
-        print("✅ Sample data initialized with 5 tables")
+        }
+    ]
+
+    collection.delete_many({})  # ⚠️ 先清空現有資料
+    collection.insert_many(sample_seats)
+    print("initialize")
+
+
 
 def find_seat_by_id(seat_id: str):
     try:
@@ -215,7 +219,7 @@ async def startup_event():
         print("✅ MongoDB connection successful")
         
         # 初始化範例數據
-        init_sample_data()
+        force_reset_sample_data()
         
         # 顯示目前資料數量
         count = collection.count_documents({})
@@ -224,6 +228,12 @@ async def startup_event():
     except Exception as e:
         print(f"❌ MongoDB connection failed: {e}")
         raise
+@app.patch("/seats/{seat_id}")
+def update_seat(seat_id: str, update_data: dict):
+    result = collection.update_one({"_id": ObjectId(seat_id)}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Seat not found")
+    return {"message": "Seat updated", "seat_id": seat_id}
 
 @app.get("/")
 def read_root():
@@ -360,6 +370,10 @@ def health_check():
                 "error": str(e)
             }
         }
+@app.post("/reset")
+def reset_data():
+    force_reset_sample_data()
+    return {"message": "資料已成功重設為 sample 版"}
 
 # Serve HTML files directly (embedded) - Customer Interface
 @app.get("/customer", response_class=HTMLResponse)
